@@ -250,9 +250,9 @@ $ sudo apt install kde-plasma-desktop
 ```
 這個下載約 3GB。每一行的狀態應該都是 `GET`；如果開始出現 `IGN`，建議終止安裝，跑 `sudo apt autoremove` 來移除已經安裝的插件，並確認網路是否連接。如果無法連接，建議跑 `sudo systemctl disable NetworkManager.service` 並且重啓電腦。
 
-安裝 KDE 時建議不要移除 `konqueror` 或 `zutty`，因爲 `konqueror` 是 `kde-baseapps` 的上源，而 `kde-baseapps` 是 `kde-plasma-desktop` 的上源。其中移除 konqueror 就算沒有報錯也不代表 apt 的 package tree 沒有崩壞，沒必要爲了省下一點空間冒險。
+安裝 KDE 時建議不要移除 `konqueror` 或 `zutty`，因爲 `konqueror` 是 `kde-baseapps` 的上源，而 `kde-baseapps` 是 `kde-plasma-desktop` 的上源。其中移除 konqueror 或 zutty 就算沒有報錯也不代表 apt 的 package tree 沒有崩壞，沒必要爲了省下一點空間冒險。
 
-由於安裝了 `network-manager`（KDE 的網路工具依賴它），必須把 Debian 本身的設定移除。這時開啓 `/etc/network/interfaces` 並把裏面每一行標註或是移除。把這一步留到現在是因爲，如果在安裝完 `network-manager` 立刻把 interfaces 的設定移除，Debian 會無法連接到網路。這是由於 `network-manager` 不會讀取 `/etc/network/interfaces` 裏的設定，所以無法連接到之前的網路（`network-manager` 的 service 在安裝完後會立刻執行，所以會跟 Debian 起衝突）。
+由於安裝了 `network-manager`（KDE 的網路工具依賴它），必須把 Debian 本身的設定移除。這時開啓 `/etc/network/interfaces` 並把裏面每一行標註或是移除。把這一步留到現在是因爲，如果在安裝完 `network-manager` 立刻把 interfaces 的設定移除，Debian 會無法連接到網路。這是由於 `network-manager` 不會讀取 `/etc/network/interfaces` 裏的設定，所以無法連接到之前的網路（`network-manager` 的 service 在安裝完後會立刻執行）。
 
 到這步䠫就可以重啓電腦使用 KDE 並快進到下一個章節了。以下加裝只是推薦：
 
