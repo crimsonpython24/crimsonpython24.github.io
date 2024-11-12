@@ -83,10 +83,79 @@ PRIORITY=100
 $ grep swap /etc/fstab
 /dev/mapper/vgmint-swap_1 none            swap
 ```
-如果有輸出的話，進入 `/etc/fstab` 把那個磁盤表 comment 掉。沒有輸出的話就沒有問題。最後再執行：
+有輸出的話進入 `/etc/fstab` 把對應的磁盤表 comment 掉，沒輸出的話就沒有問題。最後再執行：
 ```
 $ sudo zramswap start
 $ sudo zramctl
 ```
 
 ### 磁盤加密
+磁盤加密有兩個部分：把 root 從 luks2 降級到 luks1（Debian 的 `cryptdisk` 只支持 luks1，如果使用 luks2 沒辦法加密 `/boot`），然後在 home 加入一個密鑰來避免重新輸入密碼。這邊先處理 root 的磁盤表。先執行 `lsblk`：
+```sh
+$ lsblk
+NAME                MAJ:MIN RM   SIZE RO TYPE  MOUNTPOINTS
+sda                   8:0    1     0B  0 disk
+zram0               252:0    0  15.1G  0 disk  [SWAP]
+nvme0n1             259:0    0 476.9G  0 disk
+├─nvme0n1p1         259:1    0   260M  0 part  /boot/efi
+├─nvme0n1p2         259:2    0    16M  0 part
+├─nvme0n1p3         259:3    0  93.9G  0 part
+├─nvme0n1p4         259:4    0     2G  0 part
+├─nvme0n1p5         259:5    0   3.7G  0 part
+├─nvme0n1p6         259:6    0  74.5G  0 part
+│ └─nvme0n1p6_crypt 253:0    0  74.5G  0 crypt /
+└─nvme0n1p7         259:7    0 302.6G  0 part
+  └─nvme0n1p7_crypt 253:1    0 302.6G  0 crypt /home
+```
+要改成 luks1 的是 `nvme0n1p6`，也就是 `/` 的 mountpoint。同時確認這個磁盤表是 luks2 並且只有一個 key slot（0）：
+```sh
+$ sudo cryptsetup luksDump /dev/nvme0n1p6
+LUKS header information
+Version:       	2
+[...]
+Keyslots:
+  0: luks2
+```
+這時就可以重啓電腦並把 root 格式化成 luks1，但沒辦法在 Debian 運行的時候更改。重新啓動時在 GRUB 的頁面選擇 Debian 的系統，但是按 `e`（而不是 `enter`）進入 booting argument：
+![image](https://github.com/user-attachments/assets/bbbecad3-e357-4e2a-ba52-36fb90b723fb)
+
+以上只是示意圖，不用加 emergency。接下來在 linux 那行後面加上（break 前面放一個空格）`break=mount`，並按 `F10` 載入 initramfs。這時確認在 initramfs 中而不是使用者的指令集（登入使用者的指令集會要求名稱以及密碼，但是 initramfs 可以直接使用。initramfs 的 `cryptsetup` 也不用 `sudo` 執行）：
+```
+(initramfs) cryptsetup luksConvertKey --pbkdf pbkdf2 /dev/vda3
+(initramfs) cryptsetup convert --type luks1 /dev/vda3
+(initramfs) cryptsetup luksDump /dev/vda3
+```
+最後一行的 `luksDump` 應該輸出 `Version: 1` 和 `Key Slot 0: ENABLED`。Key Slot 1 到 7 應處於 DISABLED 狀態。接着按 `CTRL-ALT-DELETE` 重新啓動。
+
+> 目前的狀態是 GRUB 不用密碼，但是 `/`（`nvme0n1p6_crypt`）和 `/home`（`nvme0n1p7_crypt`）分別各輸入一次密碼。如果 GRUB 要密碼或是 home/root 其中一個不用密碼，確認加密的 partition 是 `root` 而不是 `/boot` 或 `/home`。
+
+接下來直接進去 Debian（不是 initramfs），並照常登入。執行：
+```
+$ sudo mount -o remount,ro /boot
+```
+來避免 `/boot` 在複製的過程中被其他程序更改。再來要做的是把 `/boot` 的內容移到 `/`（root） 裏面來加密 `/boot`。由於安裝時 `/boot` 在自己的磁盤表（ext4）而不是 `nvme0n1p6`裏，把 `/boot`複製進 `/` 可以利用 root 來加密 `/boot`。切記初始安裝的時候 `/boot` 必須爲 ext4 而不是 crypto，並且切勿在這一步後移除 `/boot`。複製 `/boot` 只是讓 bootloader 載入加密後的 `/boot`。輸入：
+```sh
+$ sudo mount -o remount,ro /boot
+$ sudo cp -axT /boot /boot.tmp
+$ sudo umount /boot/efi && sudo umount /boot
+$ sudo rmdir /boot
+$ sudo mv -T /boot.tmp /boot
+$ sudo mount /boot/efi
+```
+接下來更改 `/etc/fstab` 把 `/boot` 磁盤表移除掉（由於我們在 root 裏面已經有複製過的 boot，所以不用擔心 GRUB 找不到 Debian 的 bootloader）：
+```
+#UUID=... /boot           ext4    defaults        0       2
+```
+再來在 `/etc/default/grub` 內加入
+```
+GRUB_ENABLE_CRYPTODISK=y
+```
+並且執行
+```sh
+$ sudo update-grub
+$ sudo grub-install /dev/vda
+$ sudo grep 'cryptodisk\|luks' /boot/grub/grub.cfg
+```
+最後一行應該包含 `insmod cryptodisk` 和 `insmod luks` 來代表 `/boot` 已經被加密。如果 update-grub 有輸出錯誤，確認安裝時的 USB 已經移除，不然系統會認定該裝置爲另一個作業系統而嘗試更新它的 GRUB。只要最後一行沒有執行錯誤就沒有問題。
+
+> 目前的狀態應該是 GRUB, `/`，和 `/home` 各需要一次密碼，總計三次輸入
