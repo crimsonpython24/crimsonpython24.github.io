@@ -97,7 +97,7 @@ $ sudo zramctl
 ```
 
 ### 磁盤加密
-磁盤加密有兩個部分：把 root 從 luks2 降級到 luks1（Debian 的 `cryptdisk` 只支持 luks1，如果使用 luks2 沒辦法加密 `/boot`），然後在 home 加入一個密鑰來避免重新輸入密碼。這邊先處理 root 的磁盤表。先執行 `lsblk`：
+磁盤加密有兩個部分：把 root 從 luks2 降級到 luks1（Debian 的 bootloader 只支持 luks1，如果使用 luks2 無法載入加密後的 `/boot`），然後加入使用者密鑰來避免重新輸入密碼。這邊先處理 root 的磁盤表。先執行 `lsblk`：
 ```sh
 $ lsblk
 NAME                MAJ:MIN RM   SIZE RO TYPE  MOUNTPOINTS
@@ -123,11 +123,11 @@ Version:       	2
 Keyslots:
   0: luks2
 ```
-這時就可以重啓電腦並把 root 格式化成 luks1，但沒辦法在 Debian 運行的時候更改。重新啓動時在 GRUB 的頁面選擇 Debian 的系統，但是按 `e`（而不是 `enter`）進入 booting argument：
+這時就可以重啓電腦並把 root 格式化成 luks1，但沒辦法在 Debian 運行的時候更改。重新啓動時在 GRUB 的頁面選擇 Debian 的系統，但是按 `e`（而不是 `enter`）進入 booting parameters：
 ![image](https://github.com/user-attachments/assets/bbbecad3-e357-4e2a-ba52-36fb90b723fb)
 
-以上只是示意圖，不用加 emergency。接下來在 linux 那行後面加上（break 前面放一個空格）`break=mount`，並按 `F10` 載入 initramfs。這時確認在 initramfs 中而不是使用者的指令集（登入使用者的指令集會要求名稱以及密碼，但是 initramfs 可以直接使用。initramfs 的 `cryptsetup` 也不用 `sudo` 執行）：
-```
+以上只是示意圖，不用加 emergency。接下來在 linux 那行後面加上（break 前面放一個空格）`break=mount`，並按 `F10` 載入 initramfs。這時確認在 initramfs 中而不是使用者的指令集（登入使用者的指令集會要求名稱以及密碼，但是 initramfs 可以直接使用。initramfs 的 `cryptsetup` 也不用 `sudo`）：
+```sh
 (initramfs) cryptsetup luksConvertKey --pbkdf pbkdf2 /dev/nvme0n1p6
 (initramfs) cryptsetup convert --type luks1 /dev/nvme0n1p6
 (initramfs) cryptsetup luksDump /dev/nvme0n1p6
@@ -136,11 +136,11 @@ Keyslots:
 
 > 目前的狀態是 GRUB 不用密碼，但是 `/`（`nvme0n1p6_crypt`）和 `/home`（`nvme0n1p7_crypt`）分別各輸入一次密碼。如果 GRUB 要密碼或是 home/root 其中一個不用密碼，確認加密的 partition 是 `root` 而不是 `/boot` 或 `/home`。
 
-接下來直接進去 Debian（不是 initramfs），並照常登入。執行：
-```
+接下來進去 Debian（不是 initramfs）並照常登入。執行：
+```sh
 $ sudo mount -o remount,ro /boot
 ```
-來避免 boot 在複製的過程中被其他程序更改。再來要做的是把 `/boot` 的內容移到 `/`（root） 裏面來加密 `/boot`。由於安裝時 boot 在自己的磁盤表（ext4）而不是 `nvme0n1p6` 裏，把 `/boot`複製進 `/` 可以利用 root 來加密 boot。切記初始安裝的時候 `/boot` 必須爲 ext4 而不是 crypto，並且切勿在這一步後移除 `/boot`。接下來執行：
+來避免 boot 在複製的過程中被其他程序更改。再來要做的是把 `/boot` 的內容移到 `/`（root） 裏面來加密 `/boot`。由於安裝時 boot 在自己的磁盤表（ext4）而不是 `nvme0n1p6` 裏，把 `/boot`複製進 `/` 可以利用 root 來加密 boot。切記初始安裝的時候 `/boot` 必須爲 ext4 而不是 crypto，並且切勿在這一步後移除 `/boot`。然後執行：
 ```sh
 $ sudo mount -o remount,ro /boot
 $ sudo cp -axT /boot /boot.tmp
@@ -153,7 +153,7 @@ $ sudo mount /boot/efi
 ```
 #UUID=... /boot           ext4    defaults        0       2
 ```
-再來在 `/etc/default/grub` 內加入
+這裏只是把 boot 的磁盤表 comment 掉，而不是移除磁盤表本身。然後在 `/etc/default/grub` 內加入
 ```
 GRUB_ENABLE_CRYPTODISK=y
 ```
@@ -165,23 +165,23 @@ $ sudo grep 'cryptodisk\|luks' /boot/grub/grub.cfg
 ```
 其中 `/dev/nvme0n1` 是 root（`/dev/nvme0n1p6`）和 boot（`/dev/nvme0n1p7`）的主磁盤。
 
-最後一行應該包含 `insmod cryptodisk` 和 `insmod luks` 來代表 `/boot` 已經被加密。如果 update-grub 有輸出錯誤，確認安裝時的 USB 已經移除，不然系統會認定該裝置爲另一個作業系統而嘗試更新它的 GRUB。只要最後一行沒有執行錯誤就沒有問題。沒有問題的話就重新啓動。
+最後一行應該包含 `insmod cryptodisk` 和 `insmod luks` 來代表 `/boot` 已經被加密。如果 `update-grub` 有輸出錯誤，確認安裝時的 USB 已經移除，不然系統會認定該裝置爲另一個作業系統而嘗試更新它的 GRUB。只要最後一行沒有執行錯誤就沒有問題。沒有問題的話就重新啓動。
 
 雖說 cryptodisk 如果沒有顯現可以手動更改 `/etc/default/grub`，但個人不建議此做法。如果 cryptodisk 沒有輸出，嘗試再跑一次 `update-grub` 和 `grub-install`，還有問題的話建議檢查有沒有執行錯誤的指令。
 
 > 重新啓動後的狀態應該是 GRUB, `/`，和 `/home` 各需要一次密碼，總計三次輸入
 
 ### 使用者密鑰
-目前要輸入三次密碼，但理想中的狀態是在 GRUB 輸入一次密碼，然後讓 Debian 自動載入 root 和 home 的加密磁盤（直接跳進使用者的登入提示）。由於目前系統只有一個 Key slot，使用者可以生成自己的密鑰。照樣先從 root 開始：
+目前要輸入三次密碼，但理想狀態是在 GRUB 輸入一次密碼，然後讓 Debian 自動載入 root 和 home 的加密磁盤（直接跳進使用者的登入提示）。由於目前系統只有一個 Key slot，使用者可以生成自己的密鑰。照樣先從 root 開始：
 ```
 $ sudo dd bs=512 count=4 if=/dev/random of=/keyfile iflag=fullblock
 $ sudo chmod 600 /keyfile
 $ sudo cryptsetup luksAddKey /dev/nvme0n1p6 /keyfile
 $ sudo cryptsetup luksDump /dev/nvme0n1p6
 ```
-重申一下，`nvme0n1p6` 是 root 的磁盤表，不要把 keyfile 加入 boot 或是 home（home 後面會再加入另一個密鑰，但是要先生成 `/` 的密鑰）。現在 `luksDump` 應該顯示 `Key Slot 0` 和 `Key Slot 1` 處於 ENABLED 狀態，而其他六個顯示 DISABLED。後面如果密鑰不能使用，可以嘗試生成一個新的密鑰（會自己進到 `Key Slot 2`）並把無法使用的 `Key Slot 1` 刪除。
+重申一下，`nvme0n1p6` 是 root 的磁盤表，不要把 keyfile 加入 boot 或是 home（home 後面會再加入另一個密鑰，但是要先生成 `/` 的密鑰，不然 home 的密鑰無法正確載入）。現在 `luksDump` 應顯示 `Key Slot 0` 和 `Key Slot 1` 處於 ENABLED 狀態，而其他六個顯示 DISABLED。將來如果密鑰不能使用，可以嘗試生成一個新的密鑰（會自己進到 `Key Slot 2`）並把無法使用的 `Key Slot 1` 刪除。
 
-再來更改 `/etc/crypttab`（由於我們生成的密鑰在 slot 1，所以輸入 key-slot=1；前面的 `nvme0n1p6_crypt` 會因不同裝置而有不同的名稱，但應該是 root 磁盤表的名字加上 `_crypt`）：
+再來更改 `/etc/crypttab`（由於我們生成的密鑰在 slot 1，所以輸入 key-slot=1）前面的 `nvme0n1p6_crypt` 會因不同裝置而有不同的名稱，但通常是 root 磁盤表的名字加上 `_crypt`：
 ```
 nvme0n1p6_crypt UUID=<a_long_string_of_characters> /keyfile luks,discard,key-slot=1
 ```
@@ -226,12 +226,12 @@ Keyslots:
   1: luks2
 ...
 ```
-這裏不用把 home 格式化到 luks1，因爲沒有要把 `/boot` 載入到 `/home` 裏面。這裏使用不同的 root 以及 home 是因爲如果其中一個磁盤表出問題（例如 apt 代碼安裝或是更新 KDE 出包）不用把整個作業系統重新安裝。
+這裏不用把 home 格式化到 luks1，因爲沒有要把 `/boot` 載入到 `/home` 裏面。這個手冊使用不同的 root 以及 home 磁盤表是因爲如果其中一個出現問題（例如 apt 代碼安裝或是更新 KDE 出包）不用把整個作業系統重新安裝。
 
-跟 root 一樣，現在 home 的 `Key Slot 0` 和 `Key Slot 1` 應該都有一個密鑰。`Key Slot 0` 是最初安裝 Debian 是設定的密碼，而 Key Slot 1 是讓 Debian 在使用者輸入 GRUB 密碼後自動解鎖的密鑰。最後更改 `/etc/crypttab`：
+跟 root 一樣，現在 home 的 `Key Slot 0` 和 `Key Slot 1` 應該都有一個密鑰。`Key Slot 0` 是最初安裝 Debian 時設定的密碼，而 Key Slot 1 是讓 Debian 在使用者輸入 GRUB 密碼後自動解鎖的密鑰。最後更改 `/etc/crypttab`：
 ```
 nvme0n1p7_crypt UUID=<a_long_string_of_characters> /crypthome.key luks,discard,key-slot=1
 ```
-然後重啓電腦。如果安裝順利，只需要在 GRUB 頁面輸入一個密碼，然後 Debian 就會自動解鎖 root 和 home 並直接進入 tty 要求使用者登入賬號。
+然後重啓電腦。如果安裝順利，只需要在 GRUB 頁面輸入一個密碼，Debian 就會自動解鎖 root 和 home 並直接進入 tty 要求使用者登入賬號。
 
 理論上到這邊就完了，但是還可以玩更多花樣……
