@@ -5,10 +5,17 @@
 
 這篇手冊一部分是給我自己留着，所以中間可能會省略一些信息。
 
+## 警告/Warning/Advertencia
+目前這篇文章還未檢查，請勿將此文獻當作唯一參考。
+
+This article is not reviewed yet. Please do not cite this as the only resource.
+
+Este artículo no ha sido revisado aún. No lo utilice como única referencia, por favor.
+
 ## 系統初始化
 摘要：使用 luks 磁盤加密，xanmod kernel,以及使用 secure boot 設置
 
-參考來源：[DWArmstrong](https://www.dwarmstrong.org/minimal-debian/)
+參考來源：[DWArmstrong](https://www.dwarmstrong.org/minimal-debian/)，更多參考：[LinuxReviews](https://linuxreviews.org/Zram)，[CryptSetup](https://cryptsetup-team.pages.debian.net/cryptsetup/encrypted-boot.html)，[LUKS ArchWiki](https://wiki.archlinux.org/title/Dm-crypt/Device_encryption#Cryptsetup_actions_specific_for_LUKS)
 
 ### 安裝步䠫
 安裝的時候，選擇 install：
