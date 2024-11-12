@@ -248,7 +248,7 @@ $ sudo apt install network-manager network-manager-openvpn network-manager-confi
 ```sh
 $ sudo apt install kde-plasma-desktop
 ```
-這個下載約 3GB。每一行的狀態應該都是 `GET`；如果開始出現 `IGN`，建議終止安裝，跑 `sudo apt autoremove` 來移除已經安裝的插件，並確認網路是否連接。如果無法連接，建議跑 `sudo systemctl disable NetworkManager.service` 並且重啓電腦。
+這個下載約 3GB。每一行的狀態應該都是 `GET`；如果開始出現 `IGN`，建議終止安裝，跑 `sudo apt autoremove` 來移除已經安裝的插件，並確認網路是否連接。如果無法連接，跑 `sudo systemctl disable NetworkManager.service` 並且重啓電腦。
 
 安裝 KDE 時建議不要移除 `konqueror` 或 `zutty`，因爲 `konqueror` 是 `kde-baseapps` 的上源，而 `kde-baseapps` 是 `kde-plasma-desktop` 的上源。其中移除 konqueror 或 zutty 就算沒有報錯也不代表 apt 的 package tree 沒有崩壞，沒必要爲了省下一點空間冒險。
 
@@ -263,7 +263,7 @@ $ sudo apt install cups print-manager
 $ sudo usermod -aG lpadmin (username)
 $ sudo usermod -aG lp (username)
 ```
-這邊注意韌體不是印表機特定的驅動程式，而是一個通用的驅動。這要看廠商有沒有提供另外的 cups 驅動：如果有些設定在 Windows 或是 Mac 上能使用但是 Debian 上沒有，那就是代表那些設定只有安裝客製的 cups 驅動才能使用，而非通用的 `cups` 包裹。
+這邊注意韌體不是印表機特定的驅動程式，而是一個通用的驅動。這要看廠商有沒有提供另外的 cups 驅動：如果有些設定在 Windows 或是 Mac 上能使用但是 Debian 上沒有，那就是代表那些設定只有安裝客製的 cups 驅動才能使用，而非通用的 `cups` apt 包裹。
 
 防火牆：
 ```sh
@@ -271,9 +271,27 @@ $ sudo apt install ufw plasma-firewall
 $ sudo ufw enable
 ```
 
-Splash screen（載入作業系統時的特效，而不是 tty 的黑屏）：編輯 `/etc/default/grub`，找到 `GRUB_CMDLINE_LINUX_DEFAULT` 並在後面加上 `splash`。執行 `sudo update-grub` 並且重新啓動後就可以看到載入特效了。這個步䠫不會要求另外的安裝。
+Splash screen（載入作業系統時登入前的特效，而不是 tty 的黑屏）：
+
+編輯 `/etc/default/grub`，找到 `GRUB_CMDLINE_LINUX_DEFAULT` 並在後面加上 `splash`。執行 `sudo update-grub` 並重新啓動就可以看到載入特效了。此步䠫不會要求另外的安裝。
 
 再多下載一個火狐：
 ```sh
 $ sudo apt install firefox-esr
 ```
+
+先不用更改 `power-profiles-daemon` 的設定；這個手冊會使用 `tlp` 以及 `powertop`，因爲 PPD 效果不怎麼樣。這一步也不是必要的更改。雖然沒辦法像 `power-profile-daemon` 在電池的 widget 直接調節省電模式，但是 `tlp` 加上 `powertop` 的效果會比 PPD 好 20-40 分鐘。
+
+### KDE 黑屏修復
+如果安裝了 KDE，重啓過電腦，但是還卡在 tty，可以嘗試重新安裝 sddm 來修復 KDE：
+```sh
+$ sudo apt install sddm
+$ sudo dpkg-reconfigure sddm
+$ sudo rm /etc/systemd/system/display-manager.service
+$ sudo ln -s /lib/systemd/system/sddm.service /etc/systemd/system/display-manager.service
+$ sudo systemctl enable sddm
+$ sudo systemctl start sddm
+$ systemctl get-default
+$ sudo systemctl set-default graphical.target
+```
+重啓電腦看 sddm 能否使用。
