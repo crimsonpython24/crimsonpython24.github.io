@@ -234,4 +234,46 @@ nvme0n1p7_crypt UUID=<a_long_string_of_characters> /crypthome.key luks,discard,k
 ```
 然後重啓電腦。如果安裝順利，只需要在 GRUB 頁面輸入一個密碼，Debian 就會自動解鎖 root 和 home 並直接進入 tty 要求使用者登入賬號。
 
-理論上到這邊就完了，但是還可以玩更多花樣……
+## KDE 安裝
+目前的系統還在 tty，沒有一個桌面系統。個人喜好是使用 KDE；之前使用過 Gnome，但是感覺有點太像 Mac（偏好類似 Windows 的 taskbar 並移除屏幕上方的 navbar），並且 Gnome 的半透明以及其他視覺效果佔用了不少記憶體。雖然 KDE 限制比較多（例如多語言輸入非常偏好 `fcitx` 而不是 `dbus`，系統電池控制只限於 `power-profiles-daemon` 而 `tlp` 沒有相對應的控制）但是也維持了外觀及功能的一致性。
+
+值得一提的點是 Gnome 是基於 gdm 而 KDE 是基於 sddm 的 display manager。這邊不多做比較，但重點是 Gnome 的外觀及應用程序不一定能在 KDE 運行，反之亦然。同時個人感覺 KDE 的筆電支持，例如控制板以及觸控屏幕，比 Gnome 以及大多數的桌面環境好。
+
+### 網路控制
+KDE 使用的是 NetworkManager。安裝：
+```sh
+$ sudo apt install network-manager network-manager-openvpn network-manager-config-connectivity-debian
+```
+這邊先不要重新啓動，因爲 `network-manager` 和 Debian 本身的設定有衝突，後面再做解釋。目前網路應該是能用的（可以嘗試 `ping`）。接下來安裝 KDE：
+```sh
+$ sudo apt install kde-plasma-desktop
+```
+這個下載約 3GB。每一行的狀態應該都是 `GET`；如果開始出現 `IGN`，建議終止安裝，跑 `sudo apt autoremove` 來移除已經安裝的插件，並確認網路是否連接。如果無法連接，建議跑 `sudo systemctl disable NetworkManager.service` 並且重啓電腦。
+
+安裝 KDE 時建議不要移除 `konqueror` 或 `zutty`，因爲 `konqueror` 是 `kde-baseapps` 的上源，而 `kde-baseapps` 是 `kde-plasma-desktop` 的上源。其中移除 konqueror 就算沒有報錯也不代表 apt 的 package tree 沒有崩壞，沒必要爲了省下一點空間冒險。
+
+由於安裝了 `network-manager`（KDE 的網路工具依賴它），必須把 Debian 本身的設定移除。這時開啓 `/etc/network/interfaces` 並把裏面每一行標註或是移除。把這一步留到現在是因爲，如果在安裝完 `network-manager` 立刻把 interfaces 的設定移除，Debian 會無法連接到網路。這是由於 `network-manager` 不會讀取 `/etc/network/interfaces` 裏的設定，所以無法連接到之前的網路（`network-manager` 的 service 在安裝完後會立刻執行，所以會跟 Debian 起衝突）。
+
+到這步䠫就可以重啓電腦使用 KDE 並快進到下一個章節了。以下加裝只是推薦：
+
+### 其他安裝
+列印韌體：
+```sh
+$ sudo apt install cups print-manager
+$ sudo usermod -aG lpadmin (username)
+$ sudo usermod -aG lp (username)
+```
+這邊注意韌體不是印表機特定的驅動程式，而是一個通用的驅動。這要看廠商有沒有提供另外的 cups 驅動：如果有些設定在 Windows 或是 Mac 上能使用但是 Debian 上沒有，那就是代表那些設定只有安裝客製的 cups 驅動才能使用，而非通用的 `cups` 包裹。
+
+防火牆：
+```sh
+$ sudo apt install ufw plasma-firewall
+$ sudo ufw enable
+```
+
+Splash screen（載入作業系統時的特效，而不是 tty 的黑屏）：編輯 `/etc/default/grub`，找到 `GRUB_CMDLINE_LINUX_DEFAULT` 並在後面加上 `splash`。執行 `sudo update-grub` 並且重新啓動後就可以看到載入特效了。這個步䠫不會要求另外的安裝。
+
+再多下載一個火狐：
+```sh
+$ sudo apt install firefox-esr
+```
