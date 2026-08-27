@@ -1,1 +1,441 @@
-# crimsonpython24.github.io
+# Debian 設置
+應該架設自己的網站，不過目前挺懶 o_O 先放這裏將就一下，畢竟重設了系統幾次還是覺得得做個手冊。先說明不是每個Ubuntu設定都能帶入Debian；此設置也避免使用apt以外的代碼庫來維持穩定性。
+
+這手冊一部分是給我自己留着，所以中間會省略一些信息。請勿將此文獻當作唯一參考。
+
+## 系統初始化
+摘要：使用乙太（有線網路）進行luks磁盤加密及初步Debian系統安裝。
+
+參考來源：[DWArmstrong](https://www.dwarmstrong.org/minimal-debian/)、[CryptSetup](https://cryptsetup-team.pages.debian.net/cryptsetup/encrypted-boot.html)、[LUKS ArchWiki](https://wiki.archlinux.org/title/Dm-crypt/Device_encryption#Cryptsetup_actions_specific_for_LUKS)。
+
+### 安裝步䠫
+選擇install：
+
+![image](https://github.com/user-attachments/assets/62c39953-9563-49df-a2ad-6af8a3ef60b8)
+
+到磁盤切割的時選擇手動：
+
+![image](https://github.com/user-attachments/assets/14b93280-edf8-4ada-88b5-a153358a4539)
+
+用標識的 free space 即可（不一定是vda，可能是nvme0n1p5）：
+
+![image](https://github.com/user-attachments/assets/441495b2-9bf7-426f-861b-aaa41ba5f293)
+
+這手冊的setup需要`/boot`（非加密），`/`（加密），和`/home`（加密）。`/boot`1GB-4GB, root（`/`）建議 32GB 以上（個人設置 128GB），剩下的丟`/home`。加密的選擇encryption：
+
+![image](https://github.com/user-attachments/assets/51a08076-d6da-4920-bffd-82b55f34c4b2)
+
+磁盤切割好的時候選擇configure encrypted volumes並勾選兩個crypto的容量，強烈建議兩磁盤使用同密碼：
+
+![image](https://github.com/user-attachments/assets/a1879756-f62b-4ca6-9ebb-1df39dce59aa)
+
+密碼設置完成把mountpoint加入加密磁盤。設定好時應該長這樣（再次，`vda` 是虛擬機的硬盤，如果是雙作業系統應該會寫`nvme0n*`）：
+
+![image](https://github.com/user-attachments/assets/6c69e772-b0ec-40c5-becf-944455c2cd4f)
+
+此設置沒有swap磁盤，後面會設置 `zramswap`。
+
+到這畫面只選擇standard system utilities（不用SSH；稍後安裝KDE因為這裏選擇KDE會安裝不必要的軟件）：
+
+![image](https://github.com/user-attachments/assets/02318b09-1f57-45ec-b76e-c38f301b8d13)
+
+### 軟件更新以及基本終端機設定
+電腦重啓會看到以下畫面（如果有淺藍色背景代表安裝了`kde-plasma-desktop`；由於後面磁盤加密unmount電腦可能會黑屏，不過大概率只是SDDM被迫終止，故不建議在此直接裝kde）：
+
+![image](https://github.com/user-attachments/assets/0ffef122-8d56-49c8-adfd-bfe325f2e1c3)
+
+記得移除含iso的外接媒體（如usb）。輸入兩個加密磁盤（此手冊分順序root和home）的密碼並先用正常使用者登入。切換至root：
+
+```sh
+$ su - root
+```
+
+先開啓non-free及contrib的apt代碼庫（瑞昱以及驍龍的網卡基本都是non-free的韌體）：
+
+```sh
+$ nano /etc/apt/sources.list
+```
+
+每一行後面都確認包含所有的選項（例如Debian 11前的版本預設沒有`non-free-firmware`）：
+
+```txt
+deb http://deb.debian.org/debian/ bookworm main contrib non-free non-free-firmware
+deb-src http://deb.debian.org/debian/ bookworm main contrib non-free non-free-firmware
+...
+```
+
+不建議使用backports及unstable。Unstable插件沒有經過完善的測試，所以可能跟現有的套件起衝突。例如撰寫時stable的`botan`是v2.19.3，unstable/sid是2.19.5，如果修理dependency tree不保證能成功。
+
+更改後跑`apt update`和`apt full-upgrade`。接下來確保韌體都有安裝。基於處理器安裝`intel-microcode`或`amd64-microcode`：
+
+```sh
+$ apt install amd64-microcode firmware-linux-nonfree firmware-atheros
+```
+
+### zram
+Debian會建議開啓swap，但此手冊使用zram。zram會把磁盤的讀取/存儲從硬碟移進記憶體來避免不必要的硬盤操作及提升軟件讀取/存儲數據的速率。這是swap磁盤表的工作，但zram會把這些程序移進ram而不是硬碟。注意`zram`和`zswap`是不同的插件，而這教程使用前者。
+
+```sh
+$ swapoff --all
+$ apt install zram-tools
+$ zramswap stop
+$ nano /etc/default/zramswap
+```
+
+更改以下參數（16GB以下建議使用25%，個人有32GB記憶體所以停留在50%）：
+
+```txt
+PERCENT=25 #範例
+```
+
+再執行：
+
+```sh
+$ grep swap /etc/fstab #應該空白
+```
+
+有輸出的話進入`/etc/fstab`把對應磁盤表comment掉。最後執行：
+
+```sh
+$ zramswap start
+$ zramctl
+```
+
+### 磁盤加密
+磁盤加密有兩個部分：把root從luks2降級到luks1（Debian 12 bootloader只支持luks1，如使用luks2將無法載入加密後的`/boot`）。先處理root。執行`lsblk`：
+
+```sh
+$ lsblk
+NAME                MAJ:MIN RM   SIZE RO TYPE  MOUNTPOINTS
+sda                   8:0    1     0B  0 disk
+zram0               252:0    0  15.1G  0 disk  [SWAP]
+nvme0n1             259:0    0 476.9G  0 disk
+├─nvme0n1p1         259:1    0   260M  0 part  /boot/efi
+├─nvme0n1p2         259:2    0    16M  0 part
+├─nvme0n1p3         259:3    0  93.9G  0 part
+├─nvme0n1p4         259:4    0     2G  0 part
+├─nvme0n1p5         259:5    0   3.7G  0 part
+├─nvme0n1p6         259:6    0  74.5G  0 part
+│ └─nvme0n1p6_crypt 253:0    0  74.5G  0 crypt /
+└─nvme0n1p7         259:7    0 302.6G  0 part
+  └─nvme0n1p7_crypt 253:1    0 302.6G  0 crypt /home
+```
+
+先確認此磁盤表是luks2且只有一個key slot（0）：
+
+```sh
+$ cryptsetup luksDump /dev/nvme0n1p6
+LUKS header information
+Version:       	2
+[...]
+Keyslots:
+  0: luks2
+```
+
+接著重新啟動，因為無法在Debian運行時把root格式化成luks1。重新啓動時GRUB頁面不要選擇Debian系統而按`e`進入booting parameters：
+
+![image](https://github.com/user-attachments/assets/bbbecad3-e357-4e2a-ba52-36fb90b723fb)
+
+以上僅是示意圖，不要加emergency。在linux那行尾端加上（break前面放一個空格）`break=mount`並按 `F10`載入initramfs介面。下次重啟時`break=mount`會自動移除。此`nvme0n1p6`為root磁盤：
+
+```sh
+(initramfs) cryptsetup luksConvertKey --pbkdf pbkdf2 /dev/nvme0n1p6
+(initramfs) cryptsetup convert --type luks1 /dev/nvme0n1p6
+(initramfs) cryptsetup luksDump /dev/nvme0n1p6
+```
+
+最後一行`luksDump`應輸出`Version: 1`和`Key Slot 0: ENABLED`，其他處於DISABLED狀態。接著`reboot -f`重新啓動。
+
+> 目前的狀態是GRUB不用密碼但`/`（`nvme0n1p6_crypt`）和`/home`（`nvme0n1p7_crypt`）各輸入一次密碼。如果GRUB在此步驟需要密碼或home/root不用密碼，確認加密的磁盤分格是`root`而不是`/boot`或`/home`。
+
+接下來照常登入Debian（不是`e`選單）。確認換回root：
+
+```sh
+$ su - root
+# 不是`su -`或是`su root`
+```
+
+先執行：
+
+```sh
+$ mount -o remount,ro /boot
+```
+
+來避免複製中`/boot`被其他程序更改。切記初始安裝時`/boot`須爲ext4而非crypto。把`/boot`的內容複製到臨時目錄`/boot.tmp`再移除 `/boot`（`/boot/efi`通常是Windows的bootloader，不要更改）：
+
+```sh
+$ cp -axT /boot /boot.tmp
+$ umount /boot/efi && sudo umount /boot
+$ rmdir /boot
+$ mv -T /boot.tmp /boot
+$ mount /boot/efi
+```
+
+如果以上指令沒問題，更改`/etc/fstab`移除`/boot`磁盤表紀錄：
+
+```txt
+#UUID=... /boot           ext4    defaults        0       2
+```
+
+這裏只是在目錄裡移除`\boot`而非移除磁盤表本身。在`/etc/default/grub`內加入
+
+```txt
+GRUB_ENABLE_CRYPTODISK=y
+```
+
+並執行
+
+```sh
+$ update-grub
+$ grub-install /dev/nvme0n1
+$ grep 'cryptodisk\|luks' /boot/grub/grub.cfg
+```
+
+其中`/dev/nvme0n1`在此例子中為root（`/dev/nvme0n1p6`）和boot（`/dev/nvme0n1p7`）的主磁盤。
+
+最後一行應包含`insmod cryptodisk`和`insmod luks`來代表`/boot`已被加密。如`update-grub`輸出錯誤，確認安裝時的USB已經移除，不然系統會認定該裝置爲另一個作業系統而嘗試更新它的GRUB。沒問題就重新啓動。
+
+> 重新啓動後的狀態應該是GRUB，`/`，和`/home`各需要一次密碼，總計三次輸入。GRUB密碼同root和home（開頭提到root和home建議使用同一密碼）。
+
+### 使用者密鑰
+目前要輸入三次密碼，但理想狀態是在GRUB輸入一次密碼，然後讓Debian自動載入root和home的加密磁盤（直接跳進使用者的登入提示）。GRUB密碼應等於root和home的密碼。從root開始生成使用者自己的密鑰：
+
+```sh
+$ dd bs=512 count=4 if=/dev/random of=/keyfile iflag=fullblock
+$ chmod 600 /keyfile
+$ cryptsetup luksAddKey /dev/nvme0n1p6 /keyfile
+$ cryptsetup luksDump /dev/nvme0n1p6
+```
+
+`nvme0n1p6`是root的磁盤表；不要把keyfile加入boot或home（home後面會再加入另一個密鑰，但是要先生成root的密鑰，不然有時會報錯）。現在`luksDump`應顯示version 1，`Key Slot 0`和`Key Slot 1`處於ENABLED狀態，而其他為DISABLED。若密鑰無法使用，嘗試生成一個新的密鑰（cryptsetup會自己使用`Key Slot 2`）但必須手動刪除無法使用的`Key Slot 1`。
+
+接下來更改`/etc/crypttab`（由於`nvme0n1p6`的生成密鑰在slot 1，所以輸入key-slot=1）內的`nvme0n1p6_crypt`：
+
+```txt
+nvme0n1p6_crypt UUID=<a_long_string_of_characters> /keyfile luks,discard,key-slot=1
+```
+
+並更改`/etc/cryptsetup-initramfs/conf-hook`：
+
+```txt
+KEYFILE_PATTERN="/keyfile"
+```
+
+在`/etc/initramfs-tools/initramfs.conf`加入：
+
+```txt
+UMASK=0077
+```
+
+最後更新 initramfs：
+
+```txt
+$ update-initramfs -u -k all
+```
+
+到這一步時，root應該有自己的密鑰。使用以下指令檢查：
+
+```sh
+$ stat -L -c "%A  %n" /initrd.img
+-rw-------  /initrd.img
+$ lsinitramfs /initrd.img | grep "^cryptroot/keyfiles"
+cryptroot/keyfiles
+cryptroot/keyfiles/nvme0n1p6_crypt.key
+```
+
+若keyfiles沒有正確生成，建議檢查/keyfiles有沒有在conf-hook裏更改及密鑰是加在root而非home（`/etc/crypttab`），並重新生成grub以及initramfs：
+
+```sh
+$ update-grub
+$ grub-install /dev/nvme0n1
+$ update-initramfs -u -k all
+```
+
+如果到這邊都沒問題，接下來生成 home 的密鑰。不用重啓電腦。執行：
+
+```sh
+$ dd bs=512 count=4 iflag=fullblock if=/dev/random of=/crypthome.key
+$ chmod 600 /crypthome.key
+```
+
+把這個密鑰加入home（root已經有自己的密鑰）：
+
+```sh
+$ cryptsetup luksAddKey /dev/nvme0n1p7 /crypthome.key
+
+# 確認有成功加入密鑰：
+$ cryptsetup luksDump /dev/nvme0n1p7
+...
+Keyslots:
+  0: luks2
+...
+  1: luks2
+...
+```
+
+由於沒有要把`/boot`載入`/home`裏面，不用格式home到luks1。跟root一樣，現在home的`Key Slot 0`和`Key Slot 1`應都有一個密鑰。`Key Slot 0`是最初安裝Debian時設定的硬盤密碼，而Key Slot 1是讓Debian在使用者輸入GRUB密碼後自動解鎖的密鑰。再次更改 `/etc/crypttab`：
+
+```sh
+nvme0n1p7_crypt UUID=<a_long_string_of_characters> /crypthome.key luks,discard,key-slot=1
+```
+
+然後重啓電腦。如果安裝順利，只需在GRUB輸入一次密碼，Debian就會自動解鎖root和home並直接進入tty要求使用者登入。
+
+## KDE 安裝
+目前系統還在tty而沒有桌面介面。個人偏好KDE；之前用過Gnome但是感覺有點像Mac（偏好類似Windows的taskbar並無屏幕上方的navbar），且Gnome的半透明及視覺效果佔了不少記憶體。雖然KDE限制比較多（例如多語言輸入非常偏好`fcitx`而不是`dbus`，系統電池控制只限於`power-profiles-daemon`）但這是根據喜好。
+
+值得一提：Gnome基於gdm而KDE是基於sddm的display manager。這邊不多做比較，但重點是Gnome的外觀及應用程序不一定能在KDE運行，反之亦然。同時個人感覺KDE的筆電支持，例如控制板以及觸控屏幕，比Gnome以及大多數的桌面環境好。
+
+KDE使用的是 NetworkManager。安裝：
+
+```sh
+$ apt install network-manager network-manager-openvpn network-manager-config-connectivity-debian
+```
+
+這邊還無法ping。讓network-manager監管網路：
+
+```sh
+$ nano /etc/NetworkManager/NetworkManager.conf
+```
+
+```txt
+[ifupdown]
+managed=false #改成`managed=true`
+```
+
+由於安裝了`network-manager`（KDE的網路工具依賴它），必須把Debian本身的設定移除。開啓 `/etc/network/interfaces`並只留下lo：
+
+```txt
+source /etc/network/interfaces.d/*
+auto lo
+iface lo inet loopback
+#把其他都移除
+```
+
+然後重啟network manager：
+
+```sh
+$ systemctl restart NetworkManager
+```
+
+最後安裝 KDE：
+
+```sh
+$ apt install kde-plasma-desktop
+```
+
+>出現`IGN`狀態時終止安裝並跑`sudo apt autoremove`來移除已經安裝的插件。執行上面NetworkManager的步驟並跑`sudo systemctl disable NetworkManager.service`來重試連接網路。
+
+安裝完KDE不要移除konqueror，因爲kde-baseapps依賴konqueror（截至bookworm這個依賴關係是hard depends），而kde-baseapps是kde-plasma-desktop的上游依賴之一。移除konqueror會讓apt的dependency tree出問題；即使沒有立即報錯也不代表系統穩定，沒必要爲了省一點空間而冒險。
+
+最後再加splash screen（載入作業系統時登入前的特效，而不是tty的黑屏）：編輯`/etc/default/grub`，找到`GRUB_CMDLINE_LINUX_DEFAULT`並改成`splash`。執行`sudo update-grub`後重新啓動就能看到載入特效。
+
+到這裡就可以重啓電腦使用KDE並用Debian~~看福瑞~~了。以下加裝只是推薦：
+
+## 其他安裝
+
+如無特別聲明，皆用`su - root`而非本地使用者。
+
+### 防火牆
+
+```sh
+$ apt install ufw plasma-firewall
+$ ufw enable
+```
+
+### Corectrl
+
+```sh
+$ apt install corectrl
+```
+
+確認polkit規則已裝好：
+
+```sh
+$ dpkg -L corectrl | grep polkit
+```
+
+在KDE的「系統設定/自動啟動」裡加Corectrl。Caveat：每次重啟後執行Corectrl前都會要求使用者密碼。先確認Corectrl實際的action ID：
+
+```sh
+$ cat /usr/share/polkit-1/actions/org.corectrl.helper*.policy
+```
+
+看`<action id="...">`確認action id（通常是`org.corectrl.helper.init`或類似名稱）。建立polkit規則檔：
+
+```sh
+$ nano /etc/polkit-1/rules.d/90-corectrl.rules
+```
+
+把`org.corectrl.helper.init`換成上一步查到的action id：
+
+```js
+polkit.addRule(function(action, subject) {
+  if (action.id == "org.corectrl.helper.init" && subject.user == "warren") {
+    return polkit.Result.YES;
+  }
+});
+```
+
+這條規則只針對warren帳號、只針對corectrl動作，不涉及sudo和sudoers。最後重啟polkit讓規則生效：
+
+```sh
+$ systemctl restart polkit
+```
+
+重啟後不用密碼會自動跳出corectrl。
+
+### Fcitx5
+
+```
+$ apt install fcitx5 fcitx5-chinese-addons fcitx5-frontend-qt5 fcitx5-configtool
+```
+
+不要裝`kde-config-fcitx5`。輸入法在鍵盤上點右鍵更改選項較多。
+
+### TLP
+
+建議使用tlp來增加筆電電處續航，代價是無法從電池控制板調節省電/一般模式（必須移除ppd，平常沒用的話移除powertop）：
+
+```sh
+$ systemctl disable --now power-profiles-daemon
+$ apt remove power-profiles-daemon powertop
+$ apt install tlp tlp-rdw
+$ systemctl enable --now tlp
+```
+
+選配安裝TLP-UI：
+
+```sh
+$ apt install python3-gi python3-gi-cairo gir1.2-gtk-3.0 libcairo2-dev gir1.2-girepository-2.0-dev pkg-config python3-pip
+```
+
+離開root返回一般使用者：
+
+```sh
+$ su - warren
+$ pip3 install --user tlp-ui --break-system-packages
+$ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+$ source ~/.bashrc
+$ tlpui
+```
+
+沒有tlp-ui仍能用內建工具檢查tlp狀態：
+
+```sh
+$ tlp-stat -s
+```
+
+## KDE 黑屏修復
+如安裝了KDE重啓過電腦但仍還卡在tty，嘗試重新安裝sddm來修復 KDE：
+
+```sh
+$ apt install sddm
+$ dpkg-reconfigure sddm
+$ rm /etc/systemd/system/display-manager.service
+$ ln -s /lib/systemd/system/sddm.service /etc/systemd/system/display-manager.service
+$ systemctl enable sddm
+$ systemctl start sddm
+$ systemctl get-default
+$ systemctl set-default graphical.target
+```
