@@ -8,6 +8,9 @@
 
 參考來源：[DWArmstrong](https://www.dwarmstrong.org/minimal-debian/)、[CryptSetup](https://cryptsetup-team.pages.debian.net/cryptsetup/encrypted-boot.html)、[LUKS ArchWiki](https://wiki.archlinux.org/title/Dm-crypt/Device_encryption#Cryptsetup_actions_specific_for_LUKS)。
 
+### 前置作業
+關閉Secure boot。
+
 ### 安裝步䠫
 選擇install：
 
@@ -342,7 +345,13 @@ $ apt install kde-plasma-desktop
 
 最後再加splash screen（載入作業系統時登入前的特效，而不是tty的黑屏）：編輯`/etc/default/grub`，找到`GRUB_CMDLINE_LINUX_DEFAULT`並改成`splash`。執行`sudo update-grub`後重新啓動就能看到載入特效。
 
-到這裡就可以重啓電腦，拔掉乙太線，並用Debian~~看福瑞~~了。以下加裝只是推薦：
+到這裡就可以重啓電腦並拔掉乙太線。首要任務是開啟Secure boot，因為前置作業關閉了它。
+
+## Secure Boot
+
+每台電腦uefi都不同，以我的Thinkpad T14為例：進入uefi菜單並開啟secure boot和勾選「Allow Microsoft 3rd Party UEFI CA」。
+
+接下來可以盡情使用Debian~~看福瑞~~了。以下加裝只是推薦：
 
 ## 其他安裝
 
