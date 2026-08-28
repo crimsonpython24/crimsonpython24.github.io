@@ -350,9 +350,9 @@ apt install kde-plasma-desktop
 到這裡就可以重啓電腦並拔掉乙太線。首要任務是開啟secure boot，因為前置作業關閉了它。
 
 ## Secure Boot
-每台電腦uefi都不同，以我的Thinkpad T14為例：進入grub菜單，選擇「UEFI firmware setup」並開啟secure boot和勾選「Allow Microsoft 3rd Party UEFI CA」，最後「save and exit」。由於Debian官方的系統有憑證，secure boot後應仍進入Debian bios選單而不是Windows boot manager。
+每台電腦uefi都不同，以我的Thinkpad T14為例：進入grub菜單，選擇「UEFI Firmware Settings」進入Thinkpad的BIOS。接下來開啟secure boot和勾選「Allow Microsoft 3rd Party UEFI CA」，最後「save and exit」。由於Debian官方的系統有憑證，secure boot後應仍進入Debian bios選單而不是Windows boot manager。
 
-啟用後回到系統，讓GRUB透過shim鏈接secure boot信任鏈（沒有這步，前面的UEFI設定不會有作用）：
+啟用後回到Debian GNU/Linux，讓GRUB透過shim鏈接secure boot信任鏈（沒有這步，前面的UEFI設定不會有作用）：
 
 ```sh
 apt install shim-signed grub-efi-amd64-signed
@@ -400,7 +400,7 @@ openssl req -new -x509 -newkey rsa:2048 -keyout MOK.priv -outform DER -out MOK.d
 chmod 600 MOK.priv
 ```
 
-將MOK加入mokutil佇列並重啟。這裡會要求輸入一個一次性密碼；隨便打什麼都行：
+將MOK加入mokutil佇列並重啟。**MOK螢幕約5秒沒操作就會跳轉，必須盡快操作**。這裡會要求輸入一個一次性密碼，隨便打什麼都行：
 
 ```sh
 mokutil --import MOK.der
@@ -408,7 +408,9 @@ mokutil --list-new
 reboot
 ```
 
-重啟後電腦會自動藍屏而不是進入一般的grub。選擇「Enroll MOK」接「Yes」並輸入上一步自定義的密碼，最後「reboot」。這裏Xanmod會說「bad shim signature」而不會使用此kernel；進入「Advanced options for Debian GNU/Linux」並用原本的Debian內核。執行： 
+重啟後電腦會自動藍屏而不是進入一般的grub。選擇「Enroll MOK」接「Yes」並輸入上一步自定義的密碼，最後「reboot」。
+
+這裏用Xanmod會跳出「bad shim signature」而不會使用此kernel；進入「Advanced options for Debian GNU/Linux」並用原本的Debian內核。登入並執行： 
 
 ```sh
 mokutil --list-enrolled
@@ -458,6 +460,8 @@ lsinitramfs /boot/initrd.img-7.1.11-x64v3-xanmod1 | grep "^cryptroot/keyfiles"
 uname -r
 #7.1.11-x64v3-xanmod1
 ```
+
+到此步能跑`apt autoremove`來移除原始Linux內核。
 
 ### 防火牆
 
