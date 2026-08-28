@@ -1,5 +1,5 @@
 # Debian 設置
-應該架設自己的網站，不過目前挺懶 o_O 先放這裏將就一下，畢竟重設了系統幾次還是覺得得做個手冊。先說明不是每個Ubuntu設定都能帶入Debian；此設置也避免使用apt以外的代碼庫來維持穩定性。
+應該架設自己的網站，不過目前挺懶o_O先放這裏將就一下，畢竟重設了幾次系統還是覺得得做個手冊。此設置建議避免使用apt以外的代碼庫來維持穩定性。
 
 這手冊一部分是給我自己留着，所以中間會省略一些信息。請勿將此文獻當作唯一參考。
 
@@ -13,44 +13,48 @@
 
 ![image](https://github.com/user-attachments/assets/62c39953-9563-49df-a2ad-6af8a3ef60b8)
 
+如果「Detect network hardware」說hardware needs non-free firmware（通常為ath10k/ath11k）選「no」跳過。在「Configure the network」頁面選擇`enp*`來使用乙太；以此電腦為例，`enp1s0f0`是瑞昱（Realtek）的Eth卡，而WiFi的`wlp2s0`介面則屬於高通（Qualcomm）。
+
+建議開設另外的root帳密並在需要時才登入（設置root時不留空）。不要把使用者設置成root或加進sudoers。
+
 到磁盤切割的時選擇手動：
 
 ![image](https://github.com/user-attachments/assets/14b93280-edf8-4ada-88b5-a153358a4539)
 
-用標識的 free space 即可（不一定是vda，可能是nvme0n1p5）：
+用標識的free space即可（vda通常為虛擬機磁盤，一般硬盤可能是`nvme0n*`）：
 
 ![image](https://github.com/user-attachments/assets/441495b2-9bf7-426f-861b-aaa41ba5f293)
 
-這手冊的setup需要`/boot`（非加密），`/`（加密），和`/home`（加密）。`/boot`1GB-4GB, root（`/`）建議 32GB 以上（個人設置 128GB），剩下的丟`/home`。加密的選擇encryption：
+這手冊的setup需要`/boot`（非加密），`/`（加密），和`/home`（加密）。`/boot`1GB-4GB，root（`/`）建議 32GB 以上（個人設置 128GB），剩下的丟`/home`。加密的選擇encryption：
 
 ![image](https://github.com/user-attachments/assets/51a08076-d6da-4920-bffd-82b55f34c4b2)
 
-磁盤切割好的時候選擇configure encrypted volumes並勾選兩個crypto的容量，強烈建議兩磁盤使用同密碼：
+磁盤切割好時選擇Configure encrypted volumes並勾選兩個crypto的容量。等兩磁盤清理完（Erasing data on /dev/...）時，強烈建議使用相同密碼：
 
 ![image](https://github.com/user-attachments/assets/a1879756-f62b-4ca6-9ebb-1df39dce59aa)
 
-密碼設置完成把mountpoint加入加密磁盤。設定好時應該長這樣（再次，`vda` 是虛擬機的硬盤，如果是雙作業系統應該會寫`nvme0n*`）：
+密碼設置完成把mountpoint加入加密磁盤。設定好時應該長這樣（再次，`vda`是虛擬機的硬盤，如果是雙作業系統應該會寫`nvme0n*`）：
 
 ![image](https://github.com/user-attachments/assets/6c69e772-b0ec-40c5-becf-944455c2cd4f)
 
-此設置沒有swap磁盤，後面會設置 `zramswap`。
+此設置沒有swap磁盤，後面會設置`zramswap`。記得在新的crypto容量分別加上`/`和`/home`的mountpoint。
 
-到這畫面只選擇standard system utilities（不用SSH；稍後安裝KDE因為這裏選擇KDE會安裝不必要的軟件）：
+到這畫面只選擇standard system utilities（不用SSH；稍後安裝KDE是因為這裏安裝KDE會附加非必要的軟件）：
 
 ![image](https://github.com/user-attachments/assets/02318b09-1f57-45ec-b76e-c38f301b8d13)
 
 ### 軟件更新以及基本終端機設定
-電腦重啓會看到以下畫面（如果有淺藍色背景代表安裝了`kde-plasma-desktop`；由於後面磁盤加密unmount電腦可能會黑屏，不過大概率只是SDDM被迫終止，故不建議在此直接裝kde）：
+電腦重啓會看到以下畫面（如果有淺藍色背景代表安裝了`kde-plasma-desktop`；後面磁盤加密unmount電腦可能會黑屏，大概率只是SDDM被迫終止，故不建議在此及上段落直接裝kde）：
 
 ![image](https://github.com/user-attachments/assets/0ffef122-8d56-49c8-adfd-bfe325f2e1c3)
 
-記得移除含iso的外接媒體（如usb）。輸入兩個加密磁盤（此手冊分順序root和home）的密碼並先用正常使用者登入。切換至root：
+**記得移除含iso的外接媒體（如usb）**。輸入兩個加密磁盤（此手冊分順序root和home）的密碼並先用正常使用者登入。切換至root：
 
 ```sh
 $ su - root
 ```
 
-先開啓non-free及contrib的apt代碼庫（瑞昱以及驍龍的網卡基本都是non-free的韌體）：
+先開啓non-free及contrib的apt代碼庫（瑞昱及高通網卡基本都需要non-free韌體）：
 
 ```sh
 $ nano /etc/apt/sources.list
@@ -64,7 +68,7 @@ deb-src http://deb.debian.org/debian/ bookworm main contrib non-free non-free-fi
 ...
 ```
 
-不建議使用backports及unstable。Unstable插件沒有經過完善的測試，所以可能跟現有的套件起衝突。例如撰寫時stable的`botan`是v2.19.3，unstable/sid是2.19.5，如果修理dependency tree不保證能成功。
+不建議使用backports及unstable。Unstable插件沒有經過完善的測試，所以可能跟現有的套件起衝突。例如撰寫時stable的`botan`是v2.19.3，unstable/sid是2.19.5，如要修理dependency tree不保證能成功。
 
 更改後跑`apt update`和`apt full-upgrade`。接下來確保韌體都有安裝。基於處理器安裝`intel-microcode`或`amd64-microcode`：
 
@@ -99,6 +103,7 @@ $ grep swap /etc/fstab #應該空白
 ```sh
 $ zramswap start
 $ zramctl
+# /dev/zram0 lz4 15.1G...
 ```
 
 ### 磁盤加密
@@ -132,11 +137,13 @@ Keyslots:
   0: luks2
 ```
 
-接著重新啟動，因為無法在Debian運行時把root格式化成luks1。重新啓動時GRUB頁面不要選擇Debian系統而按`e`進入booting parameters：
+接著重新啟動。重新啓動時GRUB頁面不要選擇Debian系統而按`e`進入booting parameters：
 
 ![image](https://github.com/user-attachments/assets/bbbecad3-e357-4e2a-ba52-36fb90b723fb)
 
-以上僅是示意圖，不要加emergency。在linux那行尾端加上（break前面放一個空格）`break=mount`並按 `F10`載入initramfs介面。下次重啟時`break=mount`會自動移除。此`nvme0n1p6`為root磁盤：
+以上僅是示意圖，不要加emergency。在linux那行尾端加上（quiet前面放一個空格）`break=mount`並按 `Fn+F10`載入initramfs介面。下次重啟時`break=mount`會自動移除。
+
+這是會進入initramfs指令集而不是sh。此`nvme0n1p6`為root磁盤：
 
 ```sh
 (initramfs) cryptsetup luksConvertKey --pbkdf pbkdf2 /dev/nvme0n1p6
@@ -148,14 +155,15 @@ Keyslots:
 
 > 目前的狀態是GRUB不用密碼但`/`（`nvme0n1p6_crypt`）和`/home`（`nvme0n1p7_crypt`）各輸入一次密碼。如果GRUB在此步驟需要密碼或home/root不用密碼，確認加密的磁盤分格是`root`而不是`/boot`或`/home`。
 
-接下來照常登入Debian（不是`e`選單）。確認換回root：
+接下來照常登入Debian（不是`e`選單）。先登入一般使用者再換回root：
 
 ```sh
+#非sudoer使用者登入
 $ su - root
-# 不是`su -`或是`su root`
+#不是`su -`或是`su root`
 ```
 
-先執行：
+執行：
 
 ```sh
 $ mount -o remount,ro /boot
@@ -165,7 +173,7 @@ $ mount -o remount,ro /boot
 
 ```sh
 $ cp -axT /boot /boot.tmp
-$ umount /boot/efi && sudo umount /boot
+$ umount /boot/efi && umount /boot
 $ rmdir /boot
 $ mv -T /boot.tmp /boot
 $ mount /boot/efi
@@ -201,13 +209,14 @@ $ grep 'cryptodisk\|luks' /boot/grub/grub.cfg
 目前要輸入三次密碼，但理想狀態是在GRUB輸入一次密碼，然後讓Debian自動載入root和home的加密磁盤（直接跳進使用者的登入提示）。GRUB密碼應等於root和home的密碼。從root開始生成使用者自己的密鑰：
 
 ```sh
+$ su - root
 $ dd bs=512 count=4 if=/dev/random of=/keyfile iflag=fullblock
 $ chmod 600 /keyfile
 $ cryptsetup luksAddKey /dev/nvme0n1p6 /keyfile
 $ cryptsetup luksDump /dev/nvme0n1p6
 ```
 
-`nvme0n1p6`是root的磁盤表；不要把keyfile加入boot或home（home後面會再加入另一個密鑰，但是要先生成root的密鑰，不然有時會報錯）。現在`luksDump`應顯示version 1，`Key Slot 0`和`Key Slot 1`處於ENABLED狀態，而其他為DISABLED。若密鑰無法使用，嘗試生成一個新的密鑰（cryptsetup會自己使用`Key Slot 2`）但必須手動刪除無法使用的`Key Slot 1`。
+`nvme0n1p6`是root的磁盤表。不要把keyfile加入boot或home（home後面會再加入另一個密鑰，但是要先生成root的密鑰，不然仍會多輸入一次密碼）。現在`luksDump`應顯示Version: 1，`Key Slot 0`和`Key Slot 1`處於ENABLED狀態，而其他為DISABLED。若密鑰無法使用，嘗試生成一個新的密鑰（cryptsetup會自己使用`Key Slot 2`但必須手動刪除逾期的`Key Slot 1`）。
 
 接下來更改`/etc/crypttab`（由於`nvme0n1p6`的生成密鑰在slot 1，所以輸入key-slot=1）內的`nvme0n1p6_crypt`：
 
@@ -251,7 +260,7 @@ $ grub-install /dev/nvme0n1
 $ update-initramfs -u -k all
 ```
 
-如果到這邊都沒問題，接下來生成 home 的密鑰。不用重啓電腦。執行：
+如果到這邊都沒問題，接下來生成home的密鑰。不用重啓電腦。執行：
 
 ```sh
 $ dd bs=512 count=4 iflag=fullblock if=/dev/random of=/crypthome.key
@@ -263,8 +272,9 @@ $ chmod 600 /crypthome.key
 ```sh
 $ cryptsetup luksAddKey /dev/nvme0n1p7 /crypthome.key
 
-# 確認有成功加入密鑰：
+#確認有成功加入密鑰：
 $ cryptsetup luksDump /dev/nvme0n1p7
+Version: 2
 ...
 Keyslots:
   0: luks2
@@ -273,7 +283,7 @@ Keyslots:
 ...
 ```
 
-由於沒有要把`/boot`載入`/home`裏面，不用格式home到luks1。跟root一樣，現在home的`Key Slot 0`和`Key Slot 1`應都有一個密鑰。`Key Slot 0`是最初安裝Debian時設定的硬盤密碼，而Key Slot 1是讓Debian在使用者輸入GRUB密碼後自動解鎖的密鑰。再次更改 `/etc/crypttab`：
+由於沒有要把`/boot`載入`/home`，不用格式home到luks1。跟root一樣，現在home的`Key Slot 0`和`Key Slot 1`應各有一個密鑰。`Key Slot 0`是最初安裝Debian時設定的硬盤密碼，而Key Slot 1是讓Debian在使用者輸入GRUB密碼後自動解鎖的密鑰。再次更改 `/etc/crypttab`：
 
 ```sh
 nvme0n1p7_crypt UUID=<a_long_string_of_characters> /crypthome.key luks,discard,key-slot=1
@@ -326,11 +336,13 @@ $ apt install kde-plasma-desktop
 
 >出現`IGN`狀態時終止安裝並跑`sudo apt autoremove`來移除已經安裝的插件。執行上面NetworkManager的步驟並跑`sudo systemctl disable NetworkManager.service`來重試連接網路。
 
+到這裡仍然不能ping，重啟電腦就可以了。
+
 安裝完KDE不要移除konqueror，因爲kde-baseapps依賴konqueror（截至bookworm這個依賴關係是hard depends），而kde-baseapps是kde-plasma-desktop的上游依賴之一。移除konqueror會讓apt的dependency tree出問題；即使沒有立即報錯也不代表系統穩定，沒必要爲了省一點空間而冒險。
 
 最後再加splash screen（載入作業系統時登入前的特效，而不是tty的黑屏）：編輯`/etc/default/grub`，找到`GRUB_CMDLINE_LINUX_DEFAULT`並改成`splash`。執行`sudo update-grub`後重新啓動就能看到載入特效。
 
-到這裡就可以重啓電腦使用KDE並用Debian~~看福瑞~~了。以下加裝只是推薦：
+到這裡就可以重啓電腦，拔掉乙太線，並用Debian~~看福瑞~~了。以下加裝只是推薦：
 
 ## 其他安裝
 
@@ -417,7 +429,7 @@ $ su - warren
 $ pip3 install --user tlp-ui --break-system-packages
 $ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 $ source ~/.bashrc
-$ tlpui
+$ tlpui #如果說cannot open display，開一個新的終端機視窗
 ```
 
 沒有tlp-ui仍能用內建工具檢查tlp狀態：
