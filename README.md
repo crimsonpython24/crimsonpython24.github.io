@@ -4,21 +4,21 @@
 這手冊一部分是給我自己留着，所以中間會省略一些信息。請勿將此文獻當作唯一參考。
 
 ## 系統初始化
-摘要：使用乙太（有線網路）進行luks磁盤加密及初步Debian系統安裝。
+摘要：使用乙太（有線網路）並短暫關閉secure boot進行luks磁盤加密及初始Debian系統安裝。
 
 參考來源：[DWArmstrong](https://www.dwarmstrong.org/minimal-debian/)、[CryptSetup](https://cryptsetup-team.pages.debian.net/cryptsetup/encrypted-boot.html)、[LUKS ArchWiki](https://wiki.archlinux.org/title/Dm-crypt/Device_encryption#Cryptsetup_actions_specific_for_LUKS)。
 
 ### 前置作業
-關閉Secure boot。
+關閉secure boot。
 
 ### 安裝步䠫
 選擇install：
 
 ![image](https://github.com/user-attachments/assets/62c39953-9563-49df-a2ad-6af8a3ef60b8)
 
-如果「Detect network hardware」說hardware needs non-free firmware（通常為ath10k/ath11k）選「no」跳過。在「Configure the network」頁面選擇`enp*`來使用乙太；以此電腦為例，`enp1s0f0`是瑞昱（Realtek）的Eth卡，而WiFi的`wlp2s0`介面則屬於高通（Qualcomm）。
+如果「Detect network hardware」說hardware needs non-free firmware to operate（通常為ath10k/ath11k）選「no」跳過。在「Configure the network」頁面選擇`enp*`來使用乙太；以此電腦為例，`enp1s0f0`是瑞昱（Realtek）的Eth卡，而WiFi的`wlp2s0`介面則屬於高通（Qualcomm）。
 
-建議開設另外的root帳密並在需要時才登入（設置root時不留空）。不要把使用者設置成root或加進sudoers。
+建議開設root帳號並在需要時才登入（設置root時密碼不留空）。不要把使用者本身設置成root或加進sudoers。
 
 到磁盤切割的時選擇手動：
 
@@ -28,7 +28,9 @@
 
 ![image](https://github.com/user-attachments/assets/441495b2-9bf7-426f-861b-aaa41ba5f293)
 
-這手冊的setup需要`/boot`（非加密），`/`（加密），和`/home`（加密）。`/boot`1GB-4GB，root（`/`）建議 32GB 以上（個人設置 128GB），剩下的丟`/home`。加密的選擇encryption：
+這手冊的setup需要`/boot`（非加密），`/`（加密），和`/home`（加密）。`/boot`1GB-4GB，root（`/`）建議 32GB 以上（個人設置 160GB），剩下的丟`/home`。加密的選擇encryption。
+
+選擇physical volume for encryption時使用磁盤精靈預設值即可。
 
 ![image](https://github.com/user-attachments/assets/51a08076-d6da-4920-bffd-82b55f34c4b2)
 
@@ -40,14 +42,14 @@
 
 ![image](https://github.com/user-attachments/assets/6c69e772-b0ec-40c5-becf-944455c2cd4f)
 
-此設置沒有swap磁盤，後面會設置`zramswap`。記得在新的crypto容量分別加上`/`和`/home`的mountpoint。
+記得在新的crypto容量分別加上`/`和`/home`的mountpoint。此設置沒有swap磁盤，後面會設置`zramswap`；選「no」直接分割磁盤。
 
-到這畫面只選擇standard system utilities（不用SSH；稍後安裝KDE是因為這裏安裝KDE會附加非必要的軟件）：
+到這畫面只選擇standard system utilities（不用SSH；稍後安裝KDE是因為這步驟的KDE包含非必要的軟件）：
 
 ![image](https://github.com/user-attachments/assets/02318b09-1f57-45ec-b76e-c38f301b8d13)
 
 ### 軟件更新以及基本終端機設定
-電腦重啓會看到以下畫面（如果有淺藍色背景代表安裝了`kde-plasma-desktop`；後面磁盤加密unmount電腦可能會黑屏，大概率只是SDDM被迫終止，故不建議在此及上段落直接裝kde）：
+電腦重啓會看到以下畫面（如果有淺藍色背景代表安裝了`kde-plasma-desktop`；後面磁盤加密unmount如果黑屏大概只是SDDM被迫終止，故不建議在此及上段落直接裝kde）：
 
 ![image](https://github.com/user-attachments/assets/0ffef122-8d56-49c8-adfd-bfe325f2e1c3)
 
@@ -71,7 +73,7 @@ deb-src http://deb.debian.org/debian/ bookworm main contrib non-free non-free-fi
 ...
 ```
 
-不建議使用backports及unstable。Unstable插件沒有經過完善的測試，所以可能跟現有的套件起衝突。例如撰寫時stable的`botan`是v2.19.3，unstable/sid是2.19.5，如要修理dependency tree不保證能成功。
+不建議使用backports及unstable。Unstable插件沒有經過完善的測試，所以可能跟現有的套件起衝突。例如撰寫時stable的`botan`是v2.19.3，unstable是2.19.5，如要修理dependency tree不保證能成功。
 
 更改後跑`apt update`和`apt full-upgrade`。接下來確保韌體都有安裝。基於處理器安裝`intel-microcode`或`amd64-microcode`：
 
@@ -129,7 +131,7 @@ nvme0n1             259:0    0 476.9G  0 disk
   └─nvme0n1p7_crypt 253:1    0 302.6G  0 crypt /home
 ```
 
-先確認此磁盤表是luks2且只有一個key slot（0）：
+先操作root（`/dev/nvme0n1p6`）。確認此磁盤表是luks2且只有一個key slot（0）：
 
 ```sh
 cryptsetup luksDump /dev/nvme0n1p6
@@ -144,7 +146,7 @@ Keyslots:
 
 ![image](https://github.com/user-attachments/assets/bbbecad3-e357-4e2a-ba52-36fb90b723fb)
 
-以上僅是示意圖，不要加emergency。在linux那行尾端加上（quiet前面放一個空格）`break=mount`並按 `Fn+F10`載入initramfs介面。下次重啟時`break=mount`會自動移除。
+以上僅是示意圖，不要加emergency。在linux那行尾端加上（quiet前面放一個空格）`break=mount`並按 `F10`載入initramfs介面。下次重啟時`break=mount`會自動移除。
 
 這是會進入initramfs指令集而不是sh。此`nvme0n1p6`為root磁盤：
 
@@ -156,14 +158,14 @@ Keyslots:
 
 最後一行`luksDump`應輸出`Version: 1`和`Key Slot 0: ENABLED`，其他處於DISABLED狀態。接著`reboot -f`重新啓動。
 
-> 目前的狀態是GRUB不用密碼但`/`（`nvme0n1p6_crypt`）和`/home`（`nvme0n1p7_crypt`）各輸入一次密碼。如果GRUB在此步驟需要密碼或home/root不用密碼，確認加密的磁盤分格是`root`而不是`/boot`或`/home`。
+> 目前的狀態是GRUB不用密碼但`/`（`nvme0n1p6_crypt`）和`/home`（`nvme0n1p7_crypt`）各輸入一次密碼。如果GRUB在此步驟需要密碼，確認上一步加密的磁盤是`root`而不是`/boot`或`/home`。
 
-接下來照常登入Debian（不是`e`選單）。先登入一般使用者再換回root：
+接下來照常登入Debian（不是`e`選單）。登入一般使用者再換回root：
 
 ```sh
-#非sudoer使用者登入
-su - root
+#先非sudoer使用者登入
 #不是`su -`或是`su root`
+su - root
 ```
 
 執行：
@@ -202,9 +204,9 @@ grub-install /dev/nvme0n1
 grep 'cryptodisk\|luks' /boot/grub/grub.cfg
 ```
 
-其中`/dev/nvme0n1`在此例子中為root（`/dev/nvme0n1p6`）和boot（`/dev/nvme0n1p7`）的主磁盤。
+其中`/dev/nvme0n1`在此例子中為root（`/dev/nvme0n1p6`）和boot（`/dev/nvme0n1p7`）的母磁盤。
 
-最後一行應包含`insmod cryptodisk`和`insmod luks`來代表`/boot`已被加密。如`update-grub`輸出錯誤，確認安裝時的USB已經移除，不然系統會認定該裝置爲另一個作業系統而嘗試更新它的GRUB。沒問題就重新啓動。
+最後一行應包含`insmod cryptodisk`和`insmod luks`來代表`/boot`已被加密。如`update-grub`輸出錯誤，確認安裝時的USB已經移除，不然系統會認定該裝置爲另一個作業系統而嘗試更新它的GRUB。沒問題就重新啓動，**但不要拔掉乙太線**。
 
 > 重新啓動後的狀態應該是GRUB，`/`，和`/home`各需要一次密碼，總計三次輸入。GRUB密碼同root和home（開頭提到root和home建議使用同一密碼）。
 
@@ -249,10 +251,10 @@ update-initramfs -u -k all
 
 ```sh
 stat -L -c "%A  %n" /initrd.img
--rw-------  /initrd.img
+#-rw-------  /initrd.img
 lsinitramfs /initrd.img | grep "^cryptroot/keyfiles"
-cryptroot/keyfiles
-cryptroot/keyfiles/nvme0n1p6_crypt.key
+#cryptroot/keyfiles
+#cryptroot/keyfiles/nvme0n1p6_crypt.key
 ```
 
 若keyfiles沒有正確生成，建議檢查/keyfiles有沒有在conf-hook裏更改及密鑰是加在root而非home（`/etc/crypttab`），並重新生成grub以及initramfs：
@@ -292,7 +294,7 @@ Keyslots:
 nvme0n1p7_crypt UUID=<a_long_string_of_characters> /crypthome.key luks,discard,key-slot=1
 ```
 
-然後重啓電腦。如果安裝順利，只需在GRUB輸入一次密碼，Debian就會自動解鎖root和home並直接進入tty要求使用者登入。
+然後重啓電腦；確認乙太線仍然聯繫。如果安裝順利，只需在GRUB輸入一次密碼，Debian就會自動解鎖root和home並直接進入tty要求使用者登入。
 
 ## KDE 安裝
 目前系統還在tty而沒有桌面介面。個人偏好KDE；之前用過Gnome但是感覺有點像Mac（偏好類似Windows的taskbar並無屏幕上方的navbar），且Gnome的半透明及視覺效果佔了不少記憶體。雖然KDE限制比較多（例如多語言輸入非常偏好`fcitx`而不是`dbus`，系統電池控制只限於`power-profiles-daemon`）但這是根據喜好。
@@ -328,7 +330,7 @@ iface lo inet loopback
 然後重啟network manager：
 
 ```sh
-systemctl restart NetworkManager
+systemctl restart NetworkManager #執行完後等10秒
 ```
 
 最後安裝 KDE：
@@ -337,25 +339,27 @@ systemctl restart NetworkManager
 apt install kde-plasma-desktop
 ```
 
->出現`IGN`狀態時終止安裝並跑`sudo apt autoremove`來移除已經安裝的插件。執行上面NetworkManager的步驟並跑`sudo systemctl disable NetworkManager.service`來重試連接網路。
+>出現`IGN`狀態時終止安裝並跑`sudo apt autoremove`來移除已經安裝的插件。先確認乙太/Eth連線能用，再執行上面NetworkManager的步驟並跑`sudo systemctl disable NetworkManager.service`來重試連接網路。
 
-到這裡仍然不能ping，重啟電腦就可以了。
+到這裡仍不能ping，但別急。
 
 安裝完KDE不要移除konqueror，因爲kde-baseapps依賴konqueror（截至bookworm這個依賴關係是hard depends），而kde-baseapps是kde-plasma-desktop的上游依賴之一。移除konqueror會讓apt的dependency tree出問題；即使沒有立即報錯也不代表系統穩定，沒必要爲了省一點空間而冒險。
 
 最後再加splash screen（載入作業系統時登入前的特效，而不是tty的黑屏）：編輯`/etc/default/grub`，找到`GRUB_CMDLINE_LINUX_DEFAULT`並改成`splash`。執行`sudo update-grub`後重新啓動就能看到載入特效。
 
-到這裡就可以重啓電腦並拔掉乙太線。首要任務是開啟Secure boot，因為前置作業關閉了它。
+到這裡就可以重啓電腦並拔掉乙太線。首要任務是開啟secure boot，因為前置作業關閉了它。
 
 ## Secure Boot
 
-每台電腦uefi都不同，以我的Thinkpad T14為例：進入uefi菜單並開啟secure boot和勾選「Allow Microsoft 3rd Party UEFI CA」。
+每台電腦uefi都不同，以我的Thinkpad T14為例：進入grub菜單，選擇「UEFI firmware setup」並開啟secure boot和勾選「Allow Microsoft 3rd Party UEFI CA」，最後「save and exit」。由於Debian官方的系統有憑證，secure boot後應仍進入Debian bios選單而不是Windows boot manager。
 
-啟用後回到系統，讓GRUB透過shim鏈接Secure boot信任鏈（沒有這步，前面的UEFI設定不會有作用）：
+啟用後回到系統，讓GRUB透過shim鏈接secure boot信任鏈（沒有這步，前面的UEFI設定不會有作用）：
 
 ```sh
 apt install shim-signed grub-efi-amd64-signed
 update-grub
+mokutil --sb-state
+#SecureBoot enabled
 ```
 
 接下來可以盡情使用Debian~~看福瑞~~了。以下加裝只是推薦：
