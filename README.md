@@ -54,13 +54,13 @@
 **記得移除含iso的外接媒體（如usb）**。輸入兩個加密磁盤（此手冊分順序root和home）的密碼並先用正常使用者登入。切換至root：
 
 ```sh
-$ su - root
+su - root
 ```
 
 先開啓non-free及contrib的apt代碼庫（瑞昱及高通網卡基本都需要non-free韌體）：
 
 ```sh
-$ nano /etc/apt/sources.list
+nano /etc/apt/sources.list
 ```
 
 每一行後面都確認包含所有的選項（例如Debian 11前的版本預設沒有`non-free-firmware`）：
@@ -76,17 +76,17 @@ deb-src http://deb.debian.org/debian/ bookworm main contrib non-free non-free-fi
 更改後跑`apt update`和`apt full-upgrade`。接下來確保韌體都有安裝。基於處理器安裝`intel-microcode`或`amd64-microcode`：
 
 ```sh
-$ apt install amd64-microcode firmware-linux-nonfree firmware-atheros
+apt install amd64-microcode firmware-linux-nonfree firmware-atheros
 ```
 
 ### zram
 Debian會建議開啓swap，但此手冊使用zram。zram會把磁盤的讀取/存儲從硬碟移進記憶體來避免不必要的硬盤操作及提升軟件讀取/存儲數據的速率。這是swap磁盤表的工作，但zram會把這些程序移進ram而不是硬碟。注意`zram`和`zswap`是不同的插件，而這教程使用前者。
 
 ```sh
-$ swapoff --all
-$ apt install zram-tools
-$ zramswap stop
-$ nano /etc/default/zramswap
+swapoff --all
+apt install zram-tools
+zramswap stop
+nano /etc/default/zramswap
 ```
 
 更改以下參數（16GB以下建議使用25%，個人有32GB記憶體所以停留在50%）：
@@ -98,14 +98,14 @@ PERCENT=25 #範例
 再執行：
 
 ```sh
-$ grep swap /etc/fstab #應該空白
+grep swap /etc/fstab #應該空白
 ```
 
 有輸出的話進入`/etc/fstab`把對應磁盤表comment掉。最後執行：
 
 ```sh
-$ zramswap start
-$ zramctl
+zramswap start
+zramctl
 # /dev/zram0 lz4 15.1G...
 ```
 
@@ -113,7 +113,7 @@ $ zramctl
 磁盤加密有兩個部分：把root從luks2降級到luks1（Debian 12 bootloader只支持luks1，如使用luks2將無法載入加密後的`/boot`）。先處理root。執行`lsblk`：
 
 ```sh
-$ lsblk
+lsblk
 NAME                MAJ:MIN RM   SIZE RO TYPE  MOUNTPOINTS
 sda                   8:0    1     0B  0 disk
 zram0               252:0    0  15.1G  0 disk  [SWAP]
@@ -132,7 +132,7 @@ nvme0n1             259:0    0 476.9G  0 disk
 先確認此磁盤表是luks2且只有一個key slot（0）：
 
 ```sh
-$ cryptsetup luksDump /dev/nvme0n1p6
+cryptsetup luksDump /dev/nvme0n1p6
 LUKS header information
 Version:       	2
 [...]
@@ -162,24 +162,24 @@ Keyslots:
 
 ```sh
 #非sudoer使用者登入
-$ su - root
+su - root
 #不是`su -`或是`su root`
 ```
 
 執行：
 
 ```sh
-$ mount -o remount,ro /boot
+mount -o remount,ro /boot
 ```
 
 來避免複製中`/boot`被其他程序更改。切記初始安裝時`/boot`須爲ext4而非crypto。把`/boot`的內容複製到臨時目錄`/boot.tmp`再移除 `/boot`（`/boot/efi`通常是Windows的bootloader，不要更改）：
 
 ```sh
-$ cp -axT /boot /boot.tmp
-$ umount /boot/efi && umount /boot
-$ rmdir /boot
-$ mv -T /boot.tmp /boot
-$ mount /boot/efi
+cp -axT /boot /boot.tmp
+umount /boot/efi && umount /boot
+rmdir /boot
+mv -T /boot.tmp /boot
+mount /boot/efi
 ```
 
 如果以上指令沒問題，更改`/etc/fstab`移除`/boot`磁盤表紀錄：
@@ -197,9 +197,9 @@ GRUB_ENABLE_CRYPTODISK=y
 並執行
 
 ```sh
-$ update-grub
-$ grub-install /dev/nvme0n1
-$ grep 'cryptodisk\|luks' /boot/grub/grub.cfg
+update-grub
+grub-install /dev/nvme0n1
+grep 'cryptodisk\|luks' /boot/grub/grub.cfg
 ```
 
 其中`/dev/nvme0n1`在此例子中為root（`/dev/nvme0n1p6`）和boot（`/dev/nvme0n1p7`）的主磁盤。
@@ -212,11 +212,11 @@ $ grep 'cryptodisk\|luks' /boot/grub/grub.cfg
 目前要輸入三次密碼，但理想狀態是在GRUB輸入一次密碼，然後讓Debian自動載入root和home的加密磁盤（直接跳進使用者的登入提示）。GRUB密碼應等於root和home的密碼。從root開始生成使用者自己的密鑰：
 
 ```sh
-$ su - root
-$ dd bs=512 count=4 if=/dev/random of=/keyfile iflag=fullblock
-$ chmod 600 /keyfile
-$ cryptsetup luksAddKey /dev/nvme0n1p6 /keyfile
-$ cryptsetup luksDump /dev/nvme0n1p6
+su - root
+dd bs=512 count=4 if=/dev/random of=/keyfile iflag=fullblock
+chmod 600 /keyfile
+cryptsetup luksAddKey /dev/nvme0n1p6 /keyfile
+cryptsetup luksDump /dev/nvme0n1p6
 ```
 
 `nvme0n1p6`是root的磁盤表。不要把keyfile加入boot或home（home後面會再加入另一個密鑰，但是要先生成root的密鑰，不然仍會多輸入一次密碼）。現在`luksDump`應顯示Version: 1，`Key Slot 0`和`Key Slot 1`處於ENABLED狀態，而其他為DISABLED。若密鑰無法使用，嘗試生成一個新的密鑰（cryptsetup會自己使用`Key Slot 2`但必須手動刪除逾期的`Key Slot 1`）。
@@ -242,15 +242,15 @@ UMASK=0077
 最後更新 initramfs：
 
 ```txt
-$ update-initramfs -u -k all
+update-initramfs -u -k all
 ```
 
 到這一步時，root應該有自己的密鑰。使用以下指令檢查：
 
 ```sh
-$ stat -L -c "%A  %n" /initrd.img
+stat -L -c "%A  %n" /initrd.img
 -rw-------  /initrd.img
-$ lsinitramfs /initrd.img | grep "^cryptroot/keyfiles"
+lsinitramfs /initrd.img | grep "^cryptroot/keyfiles"
 cryptroot/keyfiles
 cryptroot/keyfiles/nvme0n1p6_crypt.key
 ```
@@ -258,25 +258,25 @@ cryptroot/keyfiles/nvme0n1p6_crypt.key
 若keyfiles沒有正確生成，建議檢查/keyfiles有沒有在conf-hook裏更改及密鑰是加在root而非home（`/etc/crypttab`），並重新生成grub以及initramfs：
 
 ```sh
-$ update-grub
-$ grub-install /dev/nvme0n1
-$ update-initramfs -u -k all
+update-grub
+grub-install /dev/nvme0n1
+update-initramfs -u -k all
 ```
 
 如果到這邊都沒問題，接下來生成home的密鑰。不用重啓電腦。執行：
 
 ```sh
-$ dd bs=512 count=4 iflag=fullblock if=/dev/random of=/crypthome.key
-$ chmod 600 /crypthome.key
+dd bs=512 count=4 iflag=fullblock if=/dev/random of=/crypthome.key
+chmod 600 /crypthome.key
 ```
 
 把這個密鑰加入home（root已經有自己的密鑰）：
 
 ```sh
-$ cryptsetup luksAddKey /dev/nvme0n1p7 /crypthome.key
+cryptsetup luksAddKey /dev/nvme0n1p7 /crypthome.key
 
 #確認有成功加入密鑰：
-$ cryptsetup luksDump /dev/nvme0n1p7
+cryptsetup luksDump /dev/nvme0n1p7
 Version: 2
 ...
 Keyslots:
@@ -302,13 +302,13 @@ nvme0n1p7_crypt UUID=<a_long_string_of_characters> /crypthome.key luks,discard,k
 KDE使用的是 NetworkManager。安裝：
 
 ```sh
-$ apt install network-manager network-manager-openvpn network-manager-config-connectivity-debian
+apt install network-manager network-manager-openvpn network-manager-config-connectivity-debian
 ```
 
 這邊還無法ping。讓network-manager監管網路：
 
 ```sh
-$ nano /etc/NetworkManager/NetworkManager.conf
+nano /etc/NetworkManager/NetworkManager.conf
 ```
 
 ```txt
@@ -328,13 +328,13 @@ iface lo inet loopback
 然後重啟network manager：
 
 ```sh
-$ systemctl restart NetworkManager
+systemctl restart NetworkManager
 ```
 
 最後安裝 KDE：
 
 ```sh
-$ apt install kde-plasma-desktop
+apt install kde-plasma-desktop
 ```
 
 >出現`IGN`狀態時終止安裝並跑`sudo apt autoremove`來移除已經安裝的插件。執行上面NetworkManager的步驟並跑`sudo systemctl disable NetworkManager.service`來重試連接網路。
@@ -357,35 +357,128 @@ $ apt install kde-plasma-desktop
 
 如無特別聲明，皆用`su - root`而非本地使用者。
 
+### Xanmod
+
+註冊Xanmod的PGP密鑰並加入代碼庫：
+
+```sh
+wget -qO - https://dl.xanmod.org/archive.key | sudo gpg --dearmor -vo /etc/apt/keyrings/xanmod-archive-keyring.gpg
+echo "deb [signed-by=/etc/apt/keyrings/xanmod-archive-keyring.gpg] http://deb.xanmod.org $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/xanmod-release.list
+```
+
+確認CPU的x86-64 psABI等級（Ryzen 5 Pro 6650U屬於Zen 3系列，用x64v3即可）：
+
+```sh
+apt update
+apt install linux-xanmod-x64v3
+```
+
+apt install過程會自動跑update-initramfs和update-grub，不用手動再執行一次。
+
+此代碼庫屬於第三方來源，跟本手冊開頭「避免使用apt以外代碼庫」的原則有出入。只加一個獨立簽名的代碼庫（而非backports/unstable整體）風險比較可控，但仍歸類為選配。
+
+Xanmod的核心沒有被Debian的簽名鏈信任，Secure boot開啓時無法直接載入，需要自己生成MOK並簽名。先安裝簽名工具：
+
+```sh
+apt install sbsigntool
+```
+
+生成MOK密鑰：
+
+```sh
+mkdir -p /root/mok-keys && cd /root/mok-keys
+openssl req -new -x509 -newkey rsa:2048 -keyout MOK.priv -outform DER -out MOK.der -nodes -days 36500 -subj "/CN=warren-secureboot-key/"
+chmod 600 MOK.priv
+```
+
+將MOK加入mokutil佇列並重啟：
+
+```sh
+mokutil --import MOK.der
+mokutil --list-new
+reboot
+```
+
+重啟後電腦會自動藍屏而不是進入一般的grub。選擇「Enroll MOK」接「Yes」並輸入上一步自定義的密碼。此步驟會自動重啟。
+
+```sh
+mokutil --list-enrolled
+#warren-secureboot-key
+```
+
+將密鑰轉化成pem格式（sbsign只吃PEM格式的憑證，MOK.der本身仍保留給日後mokutil --import用）：
+
+```sh
+openssl x509 -in /root/mok-keys/MOK.der -inform DER -out /root/mok-keys/MOK.pem -outform PEM
+```
+
+創建簽名用的kernel postinst hook（每次新核心安裝/更新時會自動執行）：
+
+```sh
+nano /etc/kernel/postinst.d/zz-sign-kernel
+```
+
+```sh
+#!/bin/sh
+version="$1"
+sbsign --key /root/mok-keys/MOK.priv --cert /root/mok-keys/MOK.pem \
+    --output /boot/vmlinuz-$version.signed /boot/vmlinuz-$version
+mv /boot/vmlinuz-$version.signed /boot/vmlinuz-$version
+```
+
+```sh
+chmod +x /etc/kernel/postinst.d/zz-sign-kernel
+```
+
+保險起見手動補簽一次（往後apt升級核心會自動觸發，不用再手動跑）：
+
+```sh
+/etc/kernel/postinst.d/zz-sign-kernel 7.1.11-x64v3-xanmod1
+```
+
+確認：
+
+```sh
+sbverify --list /boot/vmlinuz-7.1.11-x64v3-xanmod1
+lsinitramfs /boot/initrd.img-7.1.11-x64v3-xanmod1 | grep "^cryptroot/keyfiles"
+```
+
+重啟並在GRUB選擇Xanmod核心，確認能正常解鎖/並登入。登入後確認核心版本：
+
+```sh
+uname -r
+#7.1.11-x64v3-xanmod1
+```
+
 ### 防火牆
 
 ```sh
-$ apt install ufw plasma-firewall
-$ ufw enable
+apt install ufw plasma-firewall
+ufw enable
 ```
 
 ### Corectrl
 
 ```sh
-$ apt install corectrl
+apt install corectrl
 ```
 
 確認polkit規則已裝好：
 
 ```sh
-$ dpkg -L corectrl | grep polkit
+dpkg -L corectrl | grep polkit
 ```
 
 在KDE的「系統設定/自動啟動」裡加Corectrl。Caveat：每次重啟後執行Corectrl前都會要求使用者密碼。先確認Corectrl實際的action ID：
 
 ```sh
-$ cat /usr/share/polkit-1/actions/org.corectrl.helper*.policy
+cat /usr/share/polkit-1/actions/org.corectrl.helper*.policy
 ```
 
 看`<action id="...">`確認action id（通常是`org.corectrl.helper.init`或類似名稱）。建立polkit規則檔：
 
 ```sh
-$ nano /etc/polkit-1/rules.d/90-corectrl.rules
+nano /etc/polkit-1/rules.d/90-corectrl.rules
 ```
 
 把`org.corectrl.helper.init`換成上一步查到的action id：
@@ -401,7 +494,7 @@ polkit.addRule(function(action, subject) {
 這條規則只針對warren帳號、只針對corectrl動作，不涉及sudo和sudoers。最後重啟polkit讓規則生效：
 
 ```sh
-$ systemctl restart polkit
+systemctl restart polkit
 ```
 
 重啟後不用密碼會自動跳出corectrl。
@@ -409,7 +502,7 @@ $ systemctl restart polkit
 ### Fcitx5
 
 ```
-$ apt install fcitx5 fcitx5-chinese-addons fcitx5-frontend-qt5 fcitx5-configtool
+apt install fcitx5 fcitx5-chinese-addons fcitx5-frontend-qt5 fcitx5-configtool
 ```
 
 不要裝`kde-config-fcitx5`。輸入法在鍵盤上點右鍵更改選項較多。
@@ -419,127 +512,54 @@ $ apt install fcitx5 fcitx5-chinese-addons fcitx5-frontend-qt5 fcitx5-configtool
 建議使用tlp來增加筆電電處續航，代價是無法從電池控制板調節省電/一般模式（必須移除ppd，平常沒用的話移除powertop）：
 
 ```sh
-$ systemctl disable --now power-profiles-daemon
-$ apt remove power-profiles-daemon powertop
-$ apt install tlp tlp-rdw
-$ systemctl enable --now tlp
+systemctl disable --now power-profiles-daemon
+apt remove power-profiles-daemon powertop
+apt install tlp tlp-rdw
+systemctl enable --now tlp
 ```
 
 選配安裝TLP-UI：
 
 ```sh
-$ apt install python3-gi python3-gi-cairo gir1.2-gtk-3.0 libcairo2-dev gir1.2-girepository-2.0-dev pkg-config python3-pip
+apt install python3-gi python3-gi-cairo gir1.2-gtk-3.0 libcairo2-dev gir1.2-girepository-2.0-dev pkg-config python3-pip
 ```
 
 離開root返回一般使用者：
 
 ```sh
-$ su - warren
-$ pip3 install --user tlp-ui --break-system-packages
-$ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-$ source ~/.bashrc
-$ tlpui #如果說cannot open display，開一個新的終端機視窗
+su - warren
+pip3 install --user tlp-ui --break-system-packages
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+tlpui #如果說cannot open display，開一個新的終端機視窗
 ```
 
 沒有tlp-ui仍能用內建工具檢查tlp狀態：
 
 ```sh
-$ tlp-stat -s
+tlp-stat -s
 ```
 
-## Xanmod（測試中）
-註冊Xanmod的PGP密鑰並加入代碼庫：
+```markdown
+## Secure Boot
+每台電腦uefi都不同，以我的Thinkpad T14為例：進入uefi菜單並開啟secure boot和勾選「Allow Microsoft 3rd Party UEFI CA」。
 
+啟用後回到系統，讓GRUB透過shim鏈接Secure Boot信任鏈（沒有這步，前面的UEFI設定不會有作用）：
 ```sh
-$ wget -qO - https://dl.xanmod.org/archive.key | sudo gpg --dearmor -vo /etc/apt/keyrings/xanmod-archive-keyring.gpg
-$ echo "deb [signed-by=/etc/apt/keyrings/xanmod-archive-keyring.gpg] http://deb.xanmod.org $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/xanmod-release.list
-```
-
-確認CPU的x86-64 psABI等級（Ryzen 5 Pro 6650U屬於Zen 3系列，用`x64v3`即可）：
-
-```sh
-$ apt update
-$ apt install linux-xanmod-x64v3
-```
-
-`apt install`過程會自動跑`update-initramfs`和`update-grub`，不用手動再執行一次。
-
-> 此代碼庫屬於第三方來源，跟本手冊開頭「避免使用apt以外代碼庫」的原則有出入。只加一個獨立簽名的代碼庫（而非backports/unstable整體）風險比較可控，但仍歸類為選配。
-
-Xanmod的核心沒有被Debian的簽名鏈信任，Secure boot開啓時無法直接載入，需要自己生成MOK並簽名。生成MOK密鑰：
-
-```sh
-$ mkdir -p /root/mok-keys && cd /root/mok-keys
-$ openssl req -new -x509 -newkey rsa:2048 -keyout MOK.priv -outform DER -out MOK.der -nodes -days 36500 -subj "/CN=warren-secureboot-key/"
-$ chmod 600 MOK.priv
-```
-
-將MOK加入mokutil佇列並重啟：
-
-```sh
-$ mokutil --import MOK.der
-$ mokutil --list-new
-$ reboot
-```
-
-重啟後電腦會自動藍屏而不是進入一般的grub。選擇「Enroll MOK」接「Yes」並輸入上一步自定義的密碼。此步驟會自動重啟。
-```sh
-$ mokutil --list-enrolled
-#warren-secureboot-key
-```
-
-將密鑰轉化成pem格式（`sbsign`只吃PEM格式的憑證，`MOK.der`本身仍保留給日後`mokutil --import`用）：
-```sh
-$ openssl x509 -in /root/mok-keys/MOK.der -inform DER -out /root/mok-keys/MOK.pem -outform PEM
-```
-
-創建簽名用的kernel postinst hook（每次新核心安裝/更新時會自動執行）：
-
-```sh
-$ nano /etc/kernel/postinst.d/zz-sign-kernel
-```
-
-```sh
-#!/bin/sh
-version="$1"
-sbsign --key /root/mok-keys/MOK.priv --cert /root/mok-keys/MOK.pem \
-    --output /boot/vmlinuz-$version.signed /boot/vmlinuz-$version
-mv /boot/vmlinuz-$version.signed /boot/vmlinuz-$version
-```
-
-```sh
-$ chmod +x /etc/kernel/postinst.d/zz-sign-kernel
-```
-
-保險起見手動補簽一次（往後apt升級核心會自動觸發，不用再手動跑）：
-```sh
-$ /etc/kernel/postinst.d/zz-sign-kernel 7.1.11-x64v3-xanmod1
-```
-
-確認：
-
-```sh
-$ sbverify --list /boot/vmlinuz-7.1.11-x64v3-xanmod1
-$ lsinitramfs /boot/initrd.img-7.1.11-x64v3-xanmod1 | grep "^cryptroot/keyfiles"
-```
-
-重啟並在GRUB選擇XanMod核心，確認能正常解鎖`/`並登入。登入後確認核心版本：
-
-```sh
-$ uname -r
-#7.1.11-x64v3-xanmod1
+apt install shim-signed grub-efi-amd64-signed
+update-grub
 ```
 
 ## KDE 黑屏修復
 如安裝了KDE重啓過電腦但仍還卡在tty，嘗試重新安裝sddm來修復 KDE：
 
 ```sh
-$ apt install sddm
-$ dpkg-reconfigure sddm
-$ rm /etc/systemd/system/display-manager.service
-$ ln -s /lib/systemd/system/sddm.service /etc/systemd/system/display-manager.service
-$ systemctl enable sddm
-$ systemctl start sddm
-$ systemctl get-default
-$ systemctl set-default graphical.target
+apt install sddm
+dpkg-reconfigure sddm
+rm /etc/systemd/system/display-manager.service
+ln -s /lib/systemd/system/sddm.service /etc/systemd/system/display-manager.service
+systemctl enable sddm
+systemctl start sddm
+systemctl get-default
+systemctl set-default graphical.target
 ```
