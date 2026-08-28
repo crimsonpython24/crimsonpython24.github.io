@@ -447,6 +447,89 @@ $ tlpui #如果說cannot open display，開一個新的終端機視窗
 $ tlp-stat -s
 ```
 
+## Xanmod（測試中）
+註冊Xanmod的PGP密鑰並加入代碼庫：
+
+```sh
+$ wget -qO - https://dl.xanmod.org/archive.key | sudo gpg --dearmor -vo /etc/apt/keyrings/xanmod-archive-keyring.gpg
+$ echo "deb [signed-by=/etc/apt/keyrings/xanmod-archive-keyring.gpg] http://deb.xanmod.org $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/xanmod-release.list
+```
+
+確認CPU的x86-64 psABI等級（Ryzen 5 Pro 6650U屬於Zen 3系列，用`x64v3`即可）：
+
+```sh
+$ apt update
+$ apt install linux-xanmod-x64v3
+```
+
+`apt install`過程會自動跑`update-initramfs`和`update-grub`，不用手動再執行一次。
+
+> 此代碼庫屬於第三方來源，跟本手冊開頭「避免使用apt以外代碼庫」的原則有出入。這是特意的取捨：只加一個獨立簽名的代碼庫（而非backports/unstable整體），風險比較可控，故歸類為選配。
+
+XanMod的核心沒有被Debian的簽名鏈信任，Secure Boot開啓時無法直接載入，需要自己生成MOK並簽名。生成MOK密鑰：
+
+```sh
+$ mkdir -p /root/mok-keys && cd /root/mok-keys
+$ openssl req -new -x509 -newkey rsa:2048 -keyout MOK.priv -outform DER -out MOK.der -nodes -days 36500 -subj "/CN=warren-secureboot-key/"
+$ chmod 600 MOK.priv
+```
+
+將MOK加入mokutil佇列並重啟：
+
+```sh
+$ mokutil --import MOK.der
+$ mokutil --list-new
+$ reboot
+```
+
+重啟後電腦會自動藍屏而不是進入一般的grub。選擇「Enroll MOK」接「Yes」並輸入上一步自定義的密碼。此步驟會自動重啟。
+```sh
+$ mokutil --list-enrolled
+#warren-secureboot-key
+```
+
+將密鑰轉化成pem格式（`sbsign`只吃PEM格式的憑證，`MOK.der`本身仍保留給日後`mokutil --import`用）：
+```sh
+$ openssl x509 -in /root/mok-keys/MOK.der -inform DER -out /root/mok-keys/MOK.pem -outform PEM
+```
+
+創建簽名用的kernel postinst hook（每次新核心安裝/更新時會自動執行）：
+
+```sh
+$ nano /etc/kernel/postinst.d/zz-sign-kernel
+```
+
+```sh
+#!/bin/sh
+version="$1"
+sbsign --key /root/mok-keys/MOK.priv --cert /root/mok-keys/MOK.pem \
+    --output /boot/vmlinuz-$version.signed /boot/vmlinuz-$version
+mv /boot/vmlinuz-$version.signed /boot/vmlinuz-$version
+```
+
+```sh
+$ chmod +x /etc/kernel/postinst.d/zz-sign-kernel
+```
+
+保險起見手動補簽一次（往後apt升級核心會自動觸發，不用再手動跑）：
+```sh
+$ /etc/kernel/postinst.d/zz-sign-kernel 7.1.11-x64v3-xanmod1
+```
+
+確認：
+
+```sh
+$ sbverify --list /boot/vmlinuz-7.1.11-x64v3-xanmod1
+$ lsinitramfs /boot/initrd.img-7.1.11-x64v3-xanmod1 | grep "^cryptroot/keyfiles"
+```
+
+重啟並在GRUB選擇XanMod核心，確認能正常解鎖`/`並登入。登入後確認核心版本：
+
+```sh
+$ uname -r
+# 7.1.11-x64v3-xanmod1
+```
+
 ## KDE 黑屏修復
 如安裝了KDE重啓過電腦但仍還卡在tty，嘗試重新安裝sddm來修復 KDE：
 
