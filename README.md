@@ -351,6 +351,13 @@ apt install kde-plasma-desktop
 
 每台電腦uefi都不同，以我的Thinkpad T14為例：進入uefi菜單並開啟secure boot和勾選「Allow Microsoft 3rd Party UEFI CA」。
 
+啟用後回到系統，讓GRUB透過shim鏈接Secure boot信任鏈（沒有這步，前面的UEFI設定不會有作用）：
+
+```sh
+apt install shim-signed grub-efi-amd64-signed
+update-grub
+```
+
 接下來可以盡情使用Debian~~看福瑞~~了。以下加裝只是推薦：
 
 ## 其他安裝
@@ -375,7 +382,7 @@ apt install linux-xanmod-x64v3
 
 apt install過程會自動跑update-initramfs和update-grub，不用手動再執行一次。
 
-此代碼庫屬於第三方來源，跟本手冊開頭「避免使用apt以外代碼庫」的原則有出入。只加一個獨立簽名的代碼庫（而非backports/unstable整體）風險比較可控，但仍歸類為選配。
+此代碼庫屬於第三方來源，跟本手冊開頭「避免使用apt以外代碼庫」的原則有出入。只加一個獨立簽名的代碼庫（而非backports/unstable整體）風險比較可控，故歸類為選配。
 
 Xanmod的核心沒有被Debian的簽名鏈信任，Secure boot開啓時無法直接載入，需要自己生成MOK並簽名。先安裝簽名工具：
 
@@ -538,16 +545,6 @@ tlpui #如果說cannot open display，開一個新的終端機視窗
 
 ```sh
 tlp-stat -s
-```
-
-```markdown
-## Secure Boot
-每台電腦uefi都不同，以我的Thinkpad T14為例：進入uefi菜單並開啟secure boot和勾選「Allow Microsoft 3rd Party UEFI CA」。
-
-啟用後回到系統，讓GRUB透過shim鏈接Secure Boot信任鏈（沒有這步，前面的UEFI設定不會有作用）：
-```sh
-apt install shim-signed grub-efi-amd64-signed
-update-grub
 ```
 
 ## KDE 黑屏修復
