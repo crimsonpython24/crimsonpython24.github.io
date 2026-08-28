@@ -350,7 +350,6 @@ apt install kde-plasma-desktop
 到這裡就可以重啓電腦並拔掉乙太線。首要任務是開啟secure boot，因為前置作業關閉了它。
 
 ## Secure Boot
-
 每台電腦uefi都不同，以我的Thinkpad T14為例：進入grub菜單，選擇「UEFI firmware setup」並開啟secure boot和勾選「Allow Microsoft 3rd Party UEFI CA」，最後「save and exit」。由於Debian官方的系統有憑證，secure boot後應仍進入Debian bios選單而不是Windows boot manager。
 
 啟用後回到系統，讓GRUB透過shim鏈接secure boot信任鏈（沒有這步，前面的UEFI設定不會有作用）：
@@ -365,19 +364,18 @@ mokutil --sb-state
 接下來可以盡情使用Debian~~看福瑞~~了。以下加裝只是推薦：
 
 ## 其他安裝
-
 如無特別聲明，皆用`su - root`而非本地使用者。
 
 ### Xanmod
-
 註冊Xanmod的PGP密鑰並加入代碼庫：
 
 ```sh
 wget -qO - https://dl.xanmod.org/archive.key | sudo gpg --dearmor -vo /etc/apt/keyrings/xanmod-archive-keyring.gpg
 echo "deb [signed-by=/etc/apt/keyrings/xanmod-archive-keyring.gpg] http://deb.xanmod.org $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/xanmod-release.list
+#deb [signed-by=/etc/apt/keyrings/xanmod-archive-keyring.gpg] http://deb.xanmod.org trixie main
 ```
 
-確認CPU的x86-64 psABI等級（Ryzen 5 Pro 6650U屬於Zen 3系列，用x64v3即可）：
+確認CPU的x86-64 psABI等級（E.g., Ryzen 5 Pro 6650U屬於Zen 3系列，用x64v3即可）：
 
 ```sh
 apt update
@@ -386,9 +384,9 @@ apt install linux-xanmod-x64v3
 
 apt install過程會自動跑update-initramfs和update-grub，不用手動再執行一次。
 
-此代碼庫屬於第三方來源，跟本手冊開頭「避免使用apt以外代碼庫」的原則有出入。只加一個獨立簽名的代碼庫（而非backports/unstable整體）風險比較可控，故歸類為選配。
+此代碼庫屬於第三方來源，跟本手冊開頭「避免使用apt以外代碼庫」的原則有出入。雖然加一獨立代碼庫（而非backports/unstable整體）風險比較可控，但仍歸類為選配。
 
-Xanmod的核心沒有被Debian的簽名鏈信任，Secure boot開啓時無法直接載入，需要自己生成MOK並簽名。先安裝簽名工具：
+Xanmod的核心沒有被Debian的簽名鏈信任，secure boot開啓時無法直接載入，需要自己生成MOK並簽名。先安裝簽名工具：
 
 ```sh
 apt install sbsigntool
@@ -398,11 +396,11 @@ apt install sbsigntool
 
 ```sh
 mkdir -p /root/mok-keys && cd /root/mok-keys
-openssl req -new -x509 -newkey rsa:2048 -keyout MOK.priv -outform DER -out MOK.der -nodes -days 36500 -subj "/CN=warren-secureboot-key/"
+openssl req -new -x509 -newkey rsa:2048 -keyout MOK.priv -outform DER -out MOK.der -nodes -days 36500 -subj "/CN=elrick-secureboot-key/"
 chmod 600 MOK.priv
 ```
 
-將MOK加入mokutil佇列並重啟：
+將MOK加入mokutil佇列並重啟。這裡會要求輸入一個一次性密碼；隨便打什麼都行：
 
 ```sh
 mokutil --import MOK.der
@@ -410,11 +408,11 @@ mokutil --list-new
 reboot
 ```
 
-重啟後電腦會自動藍屏而不是進入一般的grub。選擇「Enroll MOK」接「Yes」並輸入上一步自定義的密碼。此步驟會自動重啟。
+重啟後電腦會自動藍屏而不是進入一般的grub。選擇「Enroll MOK」接「Yes」並輸入上一步自定義的密碼，最後「reboot」。這裏Xanmod會說「bad shim signature」而不會使用此kernel；進入「Advanced options for Debian GNU/Linux」並用原本的Debian內核。執行： 
 
 ```sh
 mokutil --list-enrolled
-#warren-secureboot-key
+#elrick-secureboot-key
 ```
 
 將密鑰轉化成pem格式（sbsign只吃PEM格式的憑證，MOK.der本身仍保留給日後mokutil --import用）：
@@ -496,13 +494,13 @@ nano /etc/polkit-1/rules.d/90-corectrl.rules
 
 ```js
 polkit.addRule(function(action, subject) {
-  if (action.id == "org.corectrl.helper.init" && subject.user == "warren") {
+  if (action.id == "org.corectrl.helper.init" && subject.user == "elrick") {
     return polkit.Result.YES;
   }
 });
 ```
 
-這條規則只針對warren帳號、只針對corectrl動作，不涉及sudo和sudoers。最後重啟polkit讓規則生效：
+這條規則只針對elrick帳號、只針對corectrl動作，不涉及sudo和sudoers。最後重啟polkit讓規則生效：
 
 ```sh
 systemctl restart polkit
@@ -538,7 +536,7 @@ apt install python3-gi python3-gi-cairo gir1.2-gtk-3.0 libcairo2-dev gir1.2-gire
 離開root返回一般使用者：
 
 ```sh
-su - warren
+su - elrick
 pip3 install --user tlp-ui --break-system-packages
 echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 source ~/.bashrc
