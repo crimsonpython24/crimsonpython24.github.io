@@ -464,9 +464,9 @@ $ apt install linux-xanmod-x64v3
 
 `apt install`過程會自動跑`update-initramfs`和`update-grub`，不用手動再執行一次。
 
-> 此代碼庫屬於第三方來源，跟本手冊開頭「避免使用apt以外代碼庫」的原則有出入。這是特意的取捨：只加一個獨立簽名的代碼庫（而非backports/unstable整體），風險比較可控，故歸類為選配。
+> 此代碼庫屬於第三方來源，跟本手冊開頭「避免使用apt以外代碼庫」的原則有出入。只加一個獨立簽名的代碼庫（而非backports/unstable整體）風險比較可控，但仍歸類為選配。
 
-XanMod的核心沒有被Debian的簽名鏈信任，Secure Boot開啓時無法直接載入，需要自己生成MOK並簽名。生成MOK密鑰：
+Xanmod的核心沒有被Debian的簽名鏈信任，Secure boot開啓時無法直接載入，需要自己生成MOK並簽名。生成MOK密鑰：
 
 ```sh
 $ mkdir -p /root/mok-keys && cd /root/mok-keys
@@ -527,7 +527,7 @@ $ lsinitramfs /boot/initrd.img-7.1.11-x64v3-xanmod1 | grep "^cryptroot/keyfiles"
 
 ```sh
 $ uname -r
-# 7.1.11-x64v3-xanmod1
+#7.1.11-x64v3-xanmod1
 ```
 
 ## KDE 黑屏修復
