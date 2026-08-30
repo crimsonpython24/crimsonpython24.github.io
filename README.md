@@ -553,6 +553,144 @@ tlpui #如果說cannot open display，開一個新的終端機視窗
 tlp-stat -s
 ```
 
+## Ryzen 電源限制
+### 檢察核心鎖定
+確認Lockdown LSM不會干預Ryzenadj的MSR寫入和PCI權限：
+
+```sh
+cat /sys/kernel/security/lockdown
+```
+
+如顯示任何除了`[none] integrity confidentiality`的提示，必須重新設置Secure boot（此系統未遇到著問題，所以只是揣測）。接著執行
+
+```sh
+ryzenadj -i
+```
+
+只要沒有報錯或是空白，即可繼續設置。
+
+### 開啟P-state
+```sh
+nano /etc/default/grub
+```
+
+加上amd_pstate：
+
+```txt
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash amd_pstate=active"
+```
+
+重新啟動電腦。測試：
+
+```sh
+update-grub
+reboot
+cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_driver
+#amd-pstate-epp
+cat /sys/devices/system/cpu/amd_pstate/status
+#active
+```
+
+### 安裝Ryzenadj
+```sh
+apt install git cmake libpci-dev g++ make
+git clone --recursive https://github.com/FlyGoat/RyzenAdj.git /root/RyzenAdj
+cd /root/RyzenAdj
+mkdir build && cd build
+cmake ..
+make
+make install
+```
+
+確認msr會在重啟後執行：
+
+```sh
+echo msr > /etc/modules-load.d/ryzenadj.conf
+modprobe msr
+```
+
+只要看到一串數字就沒問題。`no compatible ryzen_smu kernel module found, fallback to /dev/mem`代表沒有安裝`ryzen_smu`並使用`/dev/mem`的備用選項。
+
+### 載入k10temp
+```sh
+modprobe k10temp
+echo k10temp > /etc/modules-load.d/k10temp.conf
+```
+
+執行`sensor`應看到：
+
+```sh
+sensors
+#k10temp-pci-... 和 Tctl
+```
+
+### 開啟背景程序
+```sh
+nano /etc/systemd/system/ryzenadj-tune.service
+```
+
+```txt
+[Unit]
+Description=Apply RyzenAdj power limits
+After=multi-user.target tlp.service
+Wants=tlp.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStartPre=/sbin/modprobe msr
+ExecStart=/usr/local/bin/ryzenadj --stapm-limit=12000 --fast-limit=12000 --slow-limit=12000
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```
+systemctl daemon-reload
+systemctl enable --now ryzenadj-tune.service
+systemctl status ryzenadj-tune.service
+```
+
+確認有"Successfully set..."即可。
+
+### 重載背景程序
+```sh
+nano /usr/lib/systemd/system-sleep/ryzenadj-resume
+```
+
+```sh
+#!/bin/sh
+case "$1" in
+  post)
+    systemctl restart ryzenadj-tune.service
+    ;;
+esac
+```
+
+```sh
+chmod +x /usr/lib/systemd/system-sleep/ryzenadj-resume
+```
+
+### 確認程序
+```sh
+#重新啟動後
+ryzenadj -i
+
+#休息/resume
+systemctl suspend
+#醒來後
+ryzenadj -i
+journalctl -u ryzenadj-tune.service --since "5 min ago"
+```
+
+應看到`STAPM LIMIT`，`PPT LIMIT FAST`，`PPT LIMIT SLOW`皆為12.000。
+
+### 測試（並調整參數）
+```sh
+stress-ng --cpu 0 --timeout 300s
+watch -n1 sensors
+```
+
 ## KDE 黑屏修復
 如安裝了KDE重啓過電腦但仍還卡在tty，嘗試重新安裝sddm來修復 KDE：
 
