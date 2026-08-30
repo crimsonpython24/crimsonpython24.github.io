@@ -553,8 +553,35 @@ tlpui #如果說cannot open display，開一個新的終端機視窗
 tlp-stat -s
 ```
 
-## Ryzen 電源限制
-### 檢察核心鎖定
+### 全域DNS伺服器更改
+創建全域DNS設置檔案：
+
+```sh
+nano /etc/NetworkManager/conf.d/00-global-dns.conf
+```
+
+```
+[global-dns]
+searches=
+options=
+
+[global-dns-domain-*]
+servers=1.1.1.1,1.0.0.1
+```
+
+```sh
+sudo systemctl restart NetworkManager
+```
+
+應看到：
+
+```sh
+nameserver 1.1.1.1
+nameserver 1.0.0.1
+```
+
+### Ryzen 電源限制
+#### 檢察核心鎖定
 確認Lockdown LSM不會干預Ryzenadj的MSR寫入和PCI權限：
 
 ```sh
@@ -569,7 +596,7 @@ ryzenadj -i
 
 只要沒有報錯或是空白，即可繼續設置。
 
-### 開啟P-state
+#### 開啟P-state
 ```sh
 nano /etc/default/grub
 ```
@@ -591,7 +618,7 @@ cat /sys/devices/system/cpu/amd_pstate/status
 #active
 ```
 
-### 安裝Ryzenadj
+#### 安裝Ryzenadj
 ```sh
 apt install git cmake libpci-dev g++ make
 git clone --recursive https://github.com/FlyGoat/RyzenAdj.git /root/RyzenAdj
@@ -611,7 +638,7 @@ modprobe msr
 
 只要看到一串數字就沒問題。`no compatible ryzen_smu kernel module found, fallback to /dev/mem`代表沒有安裝`ryzen_smu`並使用`/dev/mem`的備用選項。
 
-### 載入k10temp
+#### 載入k10temp
 ```sh
 modprobe k10temp
 echo k10temp > /etc/modules-load.d/k10temp.conf
@@ -624,7 +651,7 @@ sensors
 #k10temp-pci-... 和 Tctl
 ```
 
-### 開啟背景程序
+#### 開啟背景程序
 ```sh
 nano /etc/systemd/system/ryzenadj-tune.service
 ```
@@ -653,7 +680,7 @@ systemctl status ryzenadj-tune.service
 
 確認有"Successfully set..."即可。
 
-### 重載背景程序
+#### 重載背景程序
 ```sh
 nano /usr/lib/systemd/system-sleep/ryzenadj-resume
 ```
@@ -671,7 +698,7 @@ esac
 chmod +x /usr/lib/systemd/system-sleep/ryzenadj-resume
 ```
 
-### 確認程序
+#### 確認程序
 ```sh
 #重新啟動後
 ryzenadj -i
@@ -685,7 +712,7 @@ journalctl -u ryzenadj-tune.service --since "5 min ago"
 
 應看到`STAPM LIMIT`，`PPT LIMIT FAST`，`PPT LIMIT SLOW`皆為12.000。
 
-### 測試（並調整參數）
+#### 測試（並調整參數）
 ```sh
 stress-ng --cpu 0 --timeout 300s
 watch -n1 sensors
