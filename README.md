@@ -788,8 +788,6 @@ HandlePowerKey=suspend-then-hibernate
 HandleLidSwitch=suspend-then-hibernate
 ```
 
-雖然tlp上面做了對應的更改，但有時上述檔案會掩蓋tlp的設定。
-
 ## KDE 黑屏修復
 如安裝了KDE重啓過電腦但仍還卡在tty，嘗試重新安裝sddm來修復 KDE：
 
