@@ -788,12 +788,6 @@ HandlePowerKey=suspend-then-hibernate
 HandleLidSwitch=suspend-then-hibernate
 ```
 
-#### 處理器偏好
-
-```sh
-echo 'power' | tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference
-```
-
 雖然tlp上面做了對應的更改，但有時上述檔案會掩蓋tlp的設定。
 
 ## KDE 黑屏修復
