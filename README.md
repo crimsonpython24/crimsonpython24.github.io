@@ -558,10 +558,11 @@ tlp-stat -s
 CPU
 
 ```
-CPU_SCALING_GOVERNOR_ON_BAT=powersupersave
+CPU_SCALING_GOVERNOR_ON_BAT=powersave
 CPU_ENERGY_PERF_POLICY_ON_BAT=power
 CPU_BOOST_ON_BAT=0
 PLATFORM_PROFILE_ON_BAT=low-power
+NMI_WATCHDOG=0
 ```
 
 Audio Codec
@@ -584,6 +585,12 @@ RUNTIME_PM_ON_BAT=auto
 ```
 START_CHARGE_THRESH_BAT0=75
 STOP_CHARGE_THRESH_BAT0=80
+```
+
+Wi-Fi
+
+```
+WIFI_PWR_ON_BAT=on
 ```
 
 ### 全域DNS伺服器更改
@@ -743,8 +750,6 @@ ryzenadj -i
 journalctl -u ryzenadj-tune.service --since "5 min ago"
 ```
 
-應看到`STAPM LIMIT`，`PPT LIMIT FAST`，`PPT LIMIT SLOW`皆為12.000。
-
 #### 測試（並調整參數）
 ```sh
 stress-ng --cpu 0 --timeout 300s
@@ -755,7 +760,7 @@ watch -n1 sensors
 /etc/default/grub:
 
 ```
-GRUB_CMDLINE_LINUX_DEFAULT="quiet splash amd_pstate=active acpi.ec_no_wakeup=1 amdgpu.abmlevel=1"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash amd_pstate=active acpi.ec_no_wakeup=1 amdgpu.abmlevel=1 cpufreq.default_governor=schedutil"
 ```
 
 ## KDE 黑屏修復
