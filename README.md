@@ -590,6 +590,7 @@ STOP_CHARGE_THRESH_BAT0=80
 Wi-Fi
 
 ```
+DEVICES_TO_DISABLE_ON_BAT="bluetooth nfc wifi wwan"
 WIFI_PWR_ON_BAT=on
 ```
 
@@ -762,6 +763,37 @@ watch -n1 sensors
 ```
 GRUB_CMDLINE_LINUX_DEFAULT="quiet splash amd_pstate=active acpi.ec_no_wakeup=1 amdgpu.abmlevel=1 cpufreq.default_governor=schedutil"
 ```
+
+Suspend-then-hibernate
+
+```sh
+cat > /etc/systemd/sleep.conf << 'EOF'
+[Sleep]
+HibernateState=disk
+# Suspend, then hibernate after 30 min
+HibernateDelaySec=30min
+EOF
+```
+
+更改：
+
+```sh
+nano /etc/systemd/logind.conf
+```
+
+```txt
+[Login]
+HandlePowerKey=suspend-then-hibernate
+HandleLidSwitch=suspend-then-hibernate
+```
+
+執行：
+
+```sh
+echo 'power' | tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference
+```
+
+雖然tlp上面做了對應的更改，但有時上述檔案會掩蓋tlp的設定。
 
 ## KDE 黑屏修復
 如安裝了KDE重啓過電腦但仍還卡在tty，嘗試重新安裝sddm來修復 KDE：
