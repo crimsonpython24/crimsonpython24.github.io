@@ -758,13 +758,14 @@ watch -n1 sensors
 ```
 
 ### 其他電池優化
-/etc/default/grub:
+#### 使用schedutil
+/etc/default/grub
 
 ```
 GRUB_CMDLINE_LINUX_DEFAULT="quiet splash amd_pstate=active acpi.ec_no_wakeup=1 amdgpu.abmlevel=1 cpufreq.default_governor=schedutil"
 ```
 
-Suspend-then-hibernate
+#### Suspend-then-hibernate
 
 ```sh
 cat > /etc/systemd/sleep.conf << 'EOF'
@@ -787,7 +788,7 @@ HandlePowerKey=suspend-then-hibernate
 HandleLidSwitch=suspend-then-hibernate
 ```
 
-執行：
+#### 處理器偏好
 
 ```sh
 echo 'power' | tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference
