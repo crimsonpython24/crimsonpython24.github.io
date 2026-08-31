@@ -553,6 +553,14 @@ tlpui #如果說cannot open display，開一個新的終端機視窗
 tlp-stat -s
 ```
 
+簡易設置（`/etc/tlp.conf`）：
+
+```
+PCIE_ASPM_ON_AC=default
+PCIE_ASPM_ON_BAT=powersupersave
+CPU_BOOST_ON_BAT=0
+```
+
 ### 全域DNS伺服器更改
 創建全域DNS設置檔案：
 
