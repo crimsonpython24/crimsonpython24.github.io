@@ -604,6 +604,15 @@ GPU
 RADEON_DPM_PERF_LEVEL_ON_BAT=low
 ```
 
+最後確認使用schedutil：
+
+/etc/default/grub
+
+```
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash amd_pstate=active acpi.ec_no_wakeup=1 amdgpu.abmlevel=1 cpufreq.default_governor=schedutil"
+#grub-update
+```
+
 ### 全域DNS伺服器更改
 創建全域DNS設置檔案：
 
@@ -729,7 +738,7 @@ systemctl enable --now ryzenadj-tune.service
 systemctl status ryzenadj-tune.service
 ```
 
-確認有"Successfully set..."即可。
+確認有「Successfully set...」即可。
 
 #### 重載背景程序
 ```sh
@@ -765,37 +774,6 @@ journalctl -u ryzenadj-tune.service --since "5 min ago"
 ```sh
 stress-ng --cpu 0 --timeout 300s
 watch -n1 sensors
-```
-
-### 其他電池優化
-#### 使用schedutil
-/etc/default/grub
-
-```
-GRUB_CMDLINE_LINUX_DEFAULT="quiet splash amd_pstate=active acpi.ec_no_wakeup=1 amdgpu.abmlevel=1 cpufreq.default_governor=schedutil"
-```
-
-#### Suspend-then-hibernate
-
-```sh
-cat > /etc/systemd/sleep.conf << 'EOF'
-[Sleep]
-HibernateState=disk
-# Suspend, then hibernate after 30 min
-HibernateDelaySec=30min
-EOF
-```
-
-更改：
-
-```sh
-nano /etc/systemd/logind.conf
-```
-
-```txt
-[Login]
-HandlePowerKey=suspend-then-hibernate
-HandleLidSwitch=suspend-then-hibernate
 ```
 
 ## KDE 黑屏修復
