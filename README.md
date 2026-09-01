@@ -559,6 +559,7 @@ CPU
 
 ```
 CPU_BOOST_ON_BAT=0
+CPU_DRIVER_OPMODE_ON_BAT=active
 CPU_ENERGY_PERF_POLICY_ON_BAT=power
 CPU_SCALING_GOVERNOR_ON_BAT=powersave
 CPU_SCALING_MIN_FREQ_ON_AC=0
@@ -726,7 +727,8 @@ Wants=tlp.service
 Type=oneshot
 RemainAfterExit=yes
 ExecStartPre=/sbin/modprobe msr
-ExecStart=/usr/local/bin/ryzenadj --stapm-limit=12000 --fast-limit=17000 --slow-limit=13000 --tctl-temp=85
+ExecStart=/usr/local/bin/ryzenadj --fast-limit=16000 --tctl-temp=65
+#--slow-limit=13000
 
 [Install]
 WantedBy=multi-user.target
@@ -776,6 +778,46 @@ journalctl -u ryzenadj-tune.service --since "5 min ago"
 ```sh
 stress-ng --cpu 0 --timeout 300s
 watch -n1 sensors
+```
+
+重啟後確認不會跟pstate起衝突。拔掉電源前：
+```sh
+cat /sys/devices/system/cpu/amd_pstate/status
+#active
+
+cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_driver
+#amd-pstate-epp
+
+cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+#powersave
+
+cat /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference
+#balance_performance（沒設 _ON_AC，這是預設值，不是 bug）
+
+cat /sys/firmware/acpi/platform_profile
+#balanced
+
+ryzenadj -i | grep -E "STAPM LIMIT|PPT LIMIT FAST|PPT LIMIT SLOW|THM LIMIT CORE"
+#記錄開機基準值，理論上接近 12.000 / 17.000 / 13.000 / 85.000
+```
+
+拔掉電源後：
+
+```sh
+tlp-stat -s | grep "^State"
+#確認 TLP 已經偵測到 on battery
+
+cat /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference
+#power
+
+cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+#powersave
+
+cat /sys/firmware/acpi/platform_profile
+#balanced --這行最重要
+
+ryzenadj -i | grep -E "STAPM LIMIT|PPT LIMIT FAST|PPT LIMIT SLOW|THM LIMIT CORE"
+#應該仍是 12.000 / 17.000 / 13.000 / 85.000
 ```
 
 ## KDE 黑屏修復
