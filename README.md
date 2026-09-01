@@ -727,8 +727,7 @@ Wants=tlp.service
 Type=oneshot
 RemainAfterExit=yes
 ExecStartPre=/sbin/modprobe msr
-ExecStart=/usr/local/bin/ryzenadj --fast-limit=16000 --tctl-temp=65
-#--slow-limit=13000
+ExecStart=/usr/local/bin/ryzenadj --fast-limit=16000 --slow-limit=12000 --tctl-temp=65
 
 [Install]
 WantedBy=multi-user.target
@@ -798,7 +797,6 @@ cat /sys/firmware/acpi/platform_profile
 #balanced
 
 ryzenadj -i | grep -E "STAPM LIMIT|PPT LIMIT FAST|PPT LIMIT SLOW|THM LIMIT CORE"
-#記錄開機基準值，理論上接近 12.000 / 17.000 / 13.000 / 85.000
 ```
 
 拔掉電源後：
@@ -817,7 +815,6 @@ cat /sys/firmware/acpi/platform_profile
 #balanced --這行最重要
 
 ryzenadj -i | grep -E "STAPM LIMIT|PPT LIMIT FAST|PPT LIMIT SLOW|THM LIMIT CORE"
-#應該仍是 12.000 / 17.000 / 13.000 / 85.000
 ```
 
 ## KDE 黑屏修復
