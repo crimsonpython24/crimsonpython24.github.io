@@ -791,7 +791,7 @@ cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
 #powersave
 
 cat /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference
-#balance_performance（沒設 _ON_AC，這是預設值，不是 bug）
+#balance_performance（沒設_ON_AC，這是預設值，不是bug）
 
 cat /sys/firmware/acpi/platform_profile
 #balanced
