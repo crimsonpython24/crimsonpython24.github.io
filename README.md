@@ -565,7 +565,7 @@ CPU_SCALING_MIN_FREQ_ON_AC=0
 CPU_SCALING_MAX_FREQ_ON_AC=0
 CPU_SCALING_MIN_FREQ_ON_BAT=0
 CPU_SCALING_MAX_FREQ_ON_BAT=0
-PLATFORM_PROFILE_ON_BAT=low-power
+PLATFORM_PROFILE_ON_BAT=balanced #不要用low-power不然ryzenadj無法寫入
 NMI_WATCHDOG=0
 ```
 
@@ -756,6 +756,7 @@ esac
 
 ```sh
 chmod +x /usr/lib/systemd/system-sleep/ryzenadj-resume
+echo balanced | sudo tee /sys/firmware/acpi/platform_profile
 ```
 
 #### 確認程序
@@ -765,6 +766,7 @@ ryzenadj -i
 
 #休息/resume
 systemctl suspend
+
 #醒來後
 ryzenadj -i
 journalctl -u ryzenadj-tune.service --since "5 min ago"
