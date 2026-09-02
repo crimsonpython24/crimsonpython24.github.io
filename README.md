@@ -820,6 +820,8 @@ systemctl suspend
 #醒來後
 ryzenadj -i
 journalctl -u ryzenadj-resume.service --since "5 min ago"
+
+ryzenadj -i | grep -E "STAPM LIMIT|PPT LIMIT FAST|PPT LIMIT SLOW|THM LIMIT CORE"
 ```
 
 ## KDE 黑屏修復
