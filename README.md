@@ -383,7 +383,14 @@ apt update
 apt install linux-xanmod-x64v3
 ```
 
-apt install過程會自動跑update-initramfs和update-grub，不用手動再執行一次。
+apt install過程會自動跑update-initramfs和update-grub，不用手動再執行一次。It might say here:
+
+```txt
+The following package was automatically installed and is no longer required:
+  linux-image-6.12.94+deb13-amd64
+```
+
+Do NOT run `apt autoremove` or uninstall the image here. Do this later.
 
 此代碼庫屬於第三方來源，跟本手冊開頭「避免使用apt以外代碼庫」的原則有出入。雖然加一獨立代碼庫（而非backports/unstable整體）風險比較可控，但仍歸類為選配。
 
