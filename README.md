@@ -638,6 +638,10 @@ sudo systemctl restart NetworkManager
 應看到：
 
 ```sh
+cat /etc/resolv.conf
+```
+
+```txt
 nameserver 1.1.1.1
 nameserver 1.0.0.1
 ```
