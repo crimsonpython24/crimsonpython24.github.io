@@ -677,13 +677,7 @@ nameserver 1.0.0.1
 cat /sys/kernel/security/lockdown
 ```
 
-如顯示任何除了`[none] integrity confidentiality`的提示，必須重新設置Secure boot（此系統未遇到著問題，所以只是揣測）。接著執行
-
-```sh
-ryzenadj -i
-```
-
-只要沒有報錯或是空白，即可繼續設置。
+如顯示任何除了`[none] integrity confidentiality`的提示，必須重新設置Secure boot（此系統未遇到著問題，所以只是揣測）。
 
 #### 開啟P-state
 ```sh
@@ -718,7 +712,13 @@ make
 make install
 ```
 
-確認msr會在重啟後執行：
+Install:
+```sh
+apt install lm-sensors
+sensors-detect
+```
+
+Keep spamming "Enter" to use the default values. 確認msr會在重啟後執行：
 
 ```sh
 echo msr > /etc/modules-load.d/ryzenadj.conf
@@ -755,7 +755,7 @@ Wants=tlp.service
 Type=oneshot
 RemainAfterExit=yes
 ExecStartPre=/sbin/modprobe msr
-ExecStart=/usr/local/bin/ryzenadj --fast-limit=16000 --slow-limit=12000 --tctl-temp=65
+ExecStart=/usr/local/bin/ryzenadj --fast-limit=16000 --slow-limit=12000 --tctl-temp=55
 
 [Install]
 WantedBy=multi-user.target
