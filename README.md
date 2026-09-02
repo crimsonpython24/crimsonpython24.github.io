@@ -154,6 +154,7 @@ Keyslots:
 (initramfs) cryptsetup luksConvertKey --pbkdf pbkdf2 /dev/nvme0n1p6
 (initramfs) cryptsetup convert --type luks1 /dev/nvme0n1p6
 (initramfs) cryptsetup luksDump /dev/nvme0n1p6
+(initramfs) reboot -f
 ```
 
 最後一行`luksDump`應輸出`Version: 1`和`Key Slot 0: ENABLED`，其他處於DISABLED狀態。接著`reboot -f`重新啓動。
@@ -215,9 +216,9 @@ grep 'cryptodisk\|luks' /boot/grub/grub.cfg
 
 ```sh
 su - root
-dd bs=512 count=4 if=/dev/random of=/keyfile iflag=fullblock
-chmod 600 /keyfile
-cryptsetup luksAddKey /dev/nvme0n1p6 /keyfile
+dd bs=512 count=4 if=/dev/random of=/master.key iflag=fullblock
+chmod 600 /master.key
+cryptsetup luksAddKey /dev/nvme0n1p6 /master.key
 cryptsetup luksDump /dev/nvme0n1p6
 ```
 
@@ -226,13 +227,13 @@ cryptsetup luksDump /dev/nvme0n1p6
 接下來更改`/etc/crypttab`（由於`nvme0n1p6`的生成密鑰在slot 1，所以輸入key-slot=1）內的`nvme0n1p6_crypt`：
 
 ```txt
-nvme0n1p6_crypt UUID=<a_long_string_of_characters> /keyfile luks,discard,key-slot=1
+nvme0n1p6_crypt UUID=<a_long_string_of_characters> /master.key luks,discard,key-slot=1
 ```
 
 並更改`/etc/cryptsetup-initramfs/conf-hook`：
 
 ```txt
-KEYFILE_PATTERN="/keyfile"
+KEYFILE_PATTERN="/master.key"
 ```
 
 在`/etc/initramfs-tools/initramfs.conf`加入：
