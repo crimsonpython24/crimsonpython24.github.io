@@ -845,6 +845,39 @@ cat /sys/firmware/acpi/platform_profile
 ryzenadj -i | grep -E "STAPM LIMIT|PPT LIMIT FAST|PPT LIMIT SLOW|THM LIMIT CORE"
 ```
 
+#### Run as a background service
+```sh
+nano /etc/systemd/system/ryzenadj-trigger.service
+```
+
+```ini
+[Unit]
+Description=Reapply RyzenAdj power limits on AC/battery change
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'sleep 2 && /usr/local/bin/ryzenadj --fast-limit=16000 --slow-limit=12000 --tctl-temp=55'
+```
+
+The `sleep 2` is important: it lets TLP's own `tlp auto` (which also fires on this same udev event) finish rewriting `platform_profile` first, so your ryzenadj values are the last thing applied, not the first.
+
+Udev:
+
+```sh
+nano /etc/udev/rules.d/96-ryzenadj-acpower.rules
+```
+
+```txt
+SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ACTION=="change", RUN+="/usr/bin/systemctl --no-block start ryzenadj-trigger.service"
+```
+
+Matching on `ATTR{type}=="Mains"` rather than a device name (`AC`, `ACAD`, `ADP1`, etc.) makes this portable — it fires on whatever your AC adapter node is called, in both directions (plug and unplug both emit a `change` event with `online` flipping). `--no-block` keeps udev from stalling on it. This is the same pattern TLP itself uses internally (`/usr/lib/udev/rules.d/85-tlp.rules`), just pointed at your own service instead.
+
+```sh
+systemctl daemon-reload
+udevadm control --reload
+```
+
 ## KDE 黑屏修復
 如安裝了KDE重啓過電腦但仍還卡在tty，嘗試重新安裝sddm來修復 KDE：
 
