@@ -425,6 +425,22 @@ mokutil --list-enrolled
 #elrick-secureboot-key
 ```
 
+If there are unwanted keys, remove them as such:
+
+```sh
+mokutil --export
+
+ls -1 MOK*
+#MOK-0001.der
+#MOK-0002.der
+#MOK-0003.der
+#...
+
+#Check for signature match
+mokutil --list-enrolled
+mokutil --delete MOK-000x.der
+```
+
 將密鑰轉化成pem格式（sbsign只吃PEM格式的憑證，MOK.der本身仍保留給日後mokutil --import用）：
 
 ```sh
