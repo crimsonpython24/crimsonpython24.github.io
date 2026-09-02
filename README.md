@@ -741,11 +741,13 @@ sensors
 ```
 
 #### 開啟背景程序
+建立主要的power-limit service（sleep 2秒讓TLP的處理先跑完，避免platform_profile的寫入蓋掉ryzenadj設定）：
+
 ```sh
 nano /etc/systemd/system/ryzenadj-tune.service
 ```
 
-```txt
+```ini
 [Unit]
 Description=Apply RyzenAdj power limits
 After=multi-user.target tlp.service
@@ -755,37 +757,56 @@ Wants=tlp.service
 Type=oneshot
 RemainAfterExit=yes
 ExecStartPre=/sbin/modprobe msr
+ExecStartPre=/bin/sleep 2
 ExecStart=/usr/local/bin/ryzenadj --fast-limit=16000 --slow-limit=12000 --tctl-temp=55
 
 [Install]
 WantedBy=multi-user.target
 ```
 
+#### AC/電池切換觸發
+建立udev規則，在AC供電狀態改變時重新套用限制：
+
+```sh
+nano /etc/udev/rules.d/96-ryzenadj-acpower.rules
 ```
+
+```
+SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ACTION=="change", RUN+="/usr/bin/systemctl --no-block restart ryzenadj-tune.service"
+```
+
+#### Suspend/Resume觸發
+建立resume-hook unit（不需要shell script，用systemd的sleep.target掛鉤機制）：
+
+```sh
+nano /etc/systemd/system/ryzenadj-resume.service
+```
+
+```ini
+[Unit]
+Description=Reapply RyzenAdj limits after resume
+Before=sleep.target
+StopWhenUnneeded=yes
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/true
+ExecStop=/bin/sh -c 'sleep 2 && /usr/local/bin/ryzenadj --fast-limit=16000 --slow-limit=12000 --tctl-temp=55'
+
+[Install]
+WantedBy=sleep.target
+```
+
+原理：進入睡眠時sleep.target會拉起這個unit（ExecStart=/bin/true只是標記為active）；喚醒後sleep.target被拆掉，StopWhenUnneeded讓這個unit跟著stop，觸發ExecStop重新套用限制。
+
+#### 套用設定
+```sh
 systemctl daemon-reload
+udevadm control --reload
 systemctl enable --now ryzenadj-tune.service
-systemctl status ryzenadj-tune.service
-```
-
-確認有「Successfully set...」即可。
-
-#### 重載背景程序
-```sh
-nano /usr/lib/systemd/system-sleep/ryzenadj-resume
-```
-
-```sh
-#!/bin/sh
-case "$1" in
-  post)
-    systemctl restart ryzenadj-tune.service
-    ;;
-esac
-```
-
-```sh
-chmod +x /usr/lib/systemd/system-sleep/ryzenadj-resume
-echo balanced | sudo tee /sys/firmware/acpi/platform_profile
+systemctl enable ryzenadj-resume.service
+echo balanced | sudo tee /sys/firmware/acpi/platform_profile   # 手動校正一次，之後交給TLP/udev/resume unit維持
 ```
 
 #### 確認程序
@@ -798,84 +819,7 @@ systemctl suspend
 
 #醒來後
 ryzenadj -i
-journalctl -u ryzenadj-tune.service --since "5 min ago"
-```
-
-#### 測試（並調整參數）
-```sh
-stress-ng --cpu 0 --timeout 300s
-watch -n1 sensors
-```
-
-重啟後確認不會跟pstate起衝突。拔掉電源前：
-```sh
-cat /sys/devices/system/cpu/amd_pstate/status
-#active
-
-cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_driver
-#amd-pstate-epp
-
-cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
-#powersave
-
-cat /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference
-#balance_performance（沒設_ON_AC，這是預設值，不是bug）
-
-cat /sys/firmware/acpi/platform_profile
-#balanced
-
-ryzenadj -i | grep -E "STAPM LIMIT|PPT LIMIT FAST|PPT LIMIT SLOW|THM LIMIT CORE"
-```
-
-拔掉電源後：
-
-```sh
-tlp-stat -s | grep "^State"
-#確認 TLP 已經偵測到 on battery
-
-cat /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference
-#power
-
-cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
-#powersave
-
-cat /sys/firmware/acpi/platform_profile
-#balanced --這行最重要
-
-ryzenadj -i | grep -E "STAPM LIMIT|PPT LIMIT FAST|PPT LIMIT SLOW|THM LIMIT CORE"
-```
-
-#### Run as a background service
-```sh
-nano /etc/systemd/system/ryzenadj-trigger.service
-```
-
-```ini
-[Unit]
-Description=Reapply RyzenAdj power limits on AC/battery change
-
-[Service]
-Type=oneshot
-ExecStart=/bin/sh -c 'sleep 2 && /usr/local/bin/ryzenadj --fast-limit=16000 --slow-limit=12000 --tctl-temp=55'
-```
-
-The `sleep 2` is important: it lets TLP's own `tlp auto` (which also fires on this same udev event) finish rewriting `platform_profile` first, so your ryzenadj values are the last thing applied, not the first.
-
-Udev:
-
-```sh
-nano /etc/udev/rules.d/96-ryzenadj-acpower.rules
-```
-
-```txt
-SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ACTION=="change", RUN+="/usr/bin/systemctl --no-block start ryzenadj-trigger.service"
-```
-
-Matching on `ATTR{type}=="Mains"` rather than a device name (`AC`, `ACAD`, `ADP1`, etc.) makes this portable — it fires on whatever your AC adapter node is called, in both directions (plug and unplug both emit a `change` event with `online` flipping). `--no-block` keeps udev from stalling on it. This is the same pattern TLP itself uses internally (`/usr/lib/udev/rules.d/85-tlp.rules`), just pointed at your own service instead.
-
-```sh
-systemctl daemon-reload
-udevadm control --reload
+journalctl -u ryzenadj-resume.service --since "5 min ago"
 ```
 
 ## KDE 黑屏修復
