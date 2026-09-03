@@ -266,33 +266,39 @@ grub-install /dev/nvme0n1
 update-initramfs -u -k all
 ```
 
-如果到這邊都沒問題，接下來生成home的密鑰。不用重啓電腦。執行：
+如果到這邊都沒問題，接下來讓home的解鎖從root衍生（decrypt_derived），不需要另外生成一把home專屬的密鑰檔案。不用重啓電腦。
+
+> **警告**：此方法會讓home的解鎖能力完全綁定在root的LUKS header上——衍生出來的key本質上是root header的一個hash，不是獨立存在的密鑰。如果root的LUKS header損毀，或root被`luksFormat`（即使即使用同一組密碼重新格式化），home將**永久**無法解鎖，沒有備援。這跟前面`/crypthome.key`的獨立密鑰檔案方案不同，請自行評估風險；強烈建議搭配`cryptsetup luksHeaderBackup`備份root的header到別的磁碟。
+
+先用root目前已解鎖的映射（`nvme0n1p6_crypt`）衍生一把key，加進home的LUKS header：
 
 ```sh
-dd bs=512 count=4 iflag=fullblock if=/dev/random of=/crypthome.key
-chmod 600 /crypthome.key
+cryptsetup luksAddKey /dev/nvme0n1p7 <(/lib/cryptsetup/scripts/decrypt_derived nvme0n1p6_crypt)
 ```
 
-把這個密鑰加入home（root已經有自己的密鑰）：
+確認有成功加入密鑰：
 
 ```sh
-cryptsetup luksAddKey /dev/nvme0n1p7 /crypthome.key
-
-#確認有成功加入密鑰：
 cryptsetup luksDump /dev/nvme0n1p7
-Version: 2
-...
-Keyslots:
-  0: luks2
-...
-  1: luks2
-...
+#Keyslots:
+#  0: luks2   ← 原始密碼
+#  1: luks2   ← 剛剛加入的衍生密鑰（實際slot編號以輸出為準）
 ```
 
-由於沒有要把`/boot`載入`/home`，不用格式home到luks1。跟root一樣，現在home的`Key Slot 0`和`Key Slot 1`應各有一個密鑰。`Key Slot 0`是最初安裝Debian時設定的硬盤密碼，而Key Slot 1是讓Debian在使用者輸入GRUB密碼後自動解鎖的密鑰。再次更改 `/etc/crypttab`：
+記下新密鑰所在的slot編號（下面以1為例，如果輸出不是1請自行替換）。再次更改`/etc/crypttab`——第三欄從密鑰檔案路徑改成root的映射名稱，並加上`keyscript=decrypt_derived`：
 
 ```sh
-nvme0n1p7_crypt UUID=<a_long_string_of_characters> /crypthome.key luks,discard,key-slot=1
+nano /etc/crypttab
+```
+
+```txt
+nvme0n1p7_crypt UUID=<a_long_string_of_characters> nvme0n1p6_crypt luks,discard,keyscript=decrypt_derived,key-slot=1
+```
+
+更新initramfs：
+
+```sh
+update-initramfs -u -k all
 ```
 
 然後重啓電腦；確認乙太線仍然聯繫。如果安裝順利，只需在GRUB輸入一次密碼，Debian就會自動解鎖root和home並直接進入tty要求使用者登入。
@@ -727,14 +733,22 @@ modprobe msr
 
 只要看到一串數字就沒問題。`no compatible ryzen_smu kernel module found, fallback to /dev/mem`代表沒有安裝`ryzen_smu`並使用`/dev/mem`的備用選項。
 
-#### 安裝ryzen_smu（選配，Curve Optimizer用）
+#### 安裝ryzen_smu
 上一步的`no compatible ryzen_smu kernel module found, fallback to /dev/mem`代表ryzenadj目前透過`/dev/mem`存取SMU而非`ryzen_smu`這個核心模組。若只是套用power limit（STAPM/fast/slow/tctl），`/dev/mem`已經足夠，可跳過此節；但若想嘗試Curve Optimizer（per-core undervolt），需要先裝`ryzen_smu`讓ryzenadj改用這個backend：
 
 ```sh
 apt install dkms
 git clone https://github.com/amkillam/ryzen_smu /root/ryzen_smu
 cd /root/ryzen_smu
+apt install linux-headers-$(uname -r)
+cd /root/ryzen_smu
 make dkms-install
+```
+
+```sh
+mokutil --import /var/lib/dkms/mok.pub
+mokutil --list-new #會有密鑰
+reboot
 ```
 
 系統已開啟Secure Boot，DKMS會自動生成一組簽名金鑰，流程跟前面Xanmod的MOK一樣：
@@ -757,15 +771,6 @@ ls /sys/kernel/ryzen_smu_drv/
 ryzenadj -i
 #不應再出現 no compatible ryzen_smu kernel module found 的訊息
 ```
-
-#### Curve Optimizer（實驗性，非必要）
-Ryzen 6650U屬於Rembrandt家族，ryzenadj原始碼有對應的SMU指令(`0x4C`)支援`--set-coall`/`--set-coper`，但能否成功取決於Lenovo韌體有沒有鎖住SMU的CO寫入權限，裝了`ryzen_smu`不保證一定成功（同屬Rembrandt家族的6850U社群回報過仍被拒絕），須實測：
-
-```sh
-ryzenadj --set-coall=-5
-```
-
-如果回傳`rejected by SMU`代表此筆電韌體鎖住CO寫入，無法繞過（G-Helper在Windows下對Lenovo本來就列為實驗性支援，過不了這關並不意外）。如果沒有錯誤訊息代表寫入成功，建議先用`stress-ng`測穩定性，穩定後再考慮寫進`ryzenadj-tune.service`讓它開機自動套用；由於`ryzen_smu`本身不像G-Helper那樣有内建的margin探測與夹紧機制，錯誤的CO值風險完全由自己承擔，建議從-5等小幅值開始，逐步加深並每次都重新跑穩定性測試。
 
 #### 載入k10temp
 ```sh
