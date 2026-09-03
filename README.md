@@ -727,6 +727,46 @@ modprobe msr
 
 只要看到一串數字就沒問題。`no compatible ryzen_smu kernel module found, fallback to /dev/mem`代表沒有安裝`ryzen_smu`並使用`/dev/mem`的備用選項。
 
+#### 安裝ryzen_smu（選配，Curve Optimizer用）
+上一步的`no compatible ryzen_smu kernel module found, fallback to /dev/mem`代表ryzenadj目前透過`/dev/mem`存取SMU而非`ryzen_smu`這個核心模組。若只是套用power limit（STAPM/fast/slow/tctl），`/dev/mem`已經足夠，可跳過此節；但若想嘗試Curve Optimizer（per-core undervolt），需要先裝`ryzen_smu`讓ryzenadj改用這個backend：
+
+```sh
+apt install dkms
+git clone https://github.com/amkillam/ryzen_smu /root/ryzen_smu
+cd /root/ryzen_smu
+make dkms-install
+```
+
+系統已開啟Secure Boot，DKMS會自動生成一組簽名金鑰，流程跟前面Xanmod的MOK一樣：
+
+```sh
+mokutil --list-new
+reboot
+```
+
+重啓後進入藍色MOK畫面，選「Enroll MOK」輸入密碼，完成後reboot。確認模組已載入：
+
+```sh
+dmesg | grep -i ryzen_smu
+ls /sys/kernel/ryzen_smu_drv/
+```
+
+重新確認ryzenadj的backend：
+
+```sh
+ryzenadj -i
+#不應再出現 no compatible ryzen_smu kernel module found 的訊息
+```
+
+#### Curve Optimizer（實驗性，非必要）
+Ryzen 6650U屬於Rembrandt家族，ryzenadj原始碼有對應的SMU指令(`0x4C`)支援`--set-coall`/`--set-coper`，但能否成功取決於Lenovo韌體有沒有鎖住SMU的CO寫入權限，裝了`ryzen_smu`不保證一定成功（同屬Rembrandt家族的6850U社群回報過仍被拒絕），須實測：
+
+```sh
+ryzenadj --set-coall=-5
+```
+
+如果回傳`rejected by SMU`代表此筆電韌體鎖住CO寫入，無法繞過（G-Helper在Windows下對Lenovo本來就列為實驗性支援，過不了這關並不意外）。如果沒有錯誤訊息代表寫入成功，建議先用`stress-ng`測穩定性，穩定後再考慮寫進`ryzenadj-tune.service`讓它開機自動套用；由於`ryzen_smu`本身不像G-Helper那樣有内建的margin探測與夹紧機制，錯誤的CO值風險完全由自己承擔，建議從-5等小幅值開始，逐步加深並每次都重新跑穩定性測試。
+
 #### 載入k10temp
 ```sh
 modprobe k10temp
