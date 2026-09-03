@@ -281,8 +281,8 @@ cryptsetup luksAddKey /dev/nvme0n1p7 <(/lib/cryptsetup/scripts/decrypt_derived n
 ```sh
 cryptsetup luksDump /dev/nvme0n1p7
 #Keyslots:
-#  0: luks2   ← 原始密碼
-#  1: luks2   ← 剛剛加入的衍生密鑰（實際slot編號以輸出為準）
+#  0: luks2   #原始密碼
+#  1: luks2   #剛剛加入的衍生密鑰（實際slot編號以輸出為準）
 ```
 
 記下新密鑰所在的slot編號（下面以1為例，如果輸出不是1請自行替換）。再次更改`/etc/crypttab`——第三欄從密鑰檔案路徑改成root的映射名稱，並加上`keyscript=decrypt_derived`：
@@ -292,7 +292,7 @@ nano /etc/crypttab
 ```
 
 ```txt
-nvme0n1p7_crypt UUID=<a_long_string_of_characters> nvme0n1p6_crypt luks,discard,keyscript=decrypt_derived,key-slot=1
+nvme0n1p7_crypt UUID=<a_long_string_of_characters> nvme0n1p6_crypt luks,discard,keyscript=decrypt_derived,key-slot=1,initramfs
 ```
 
 更新initramfs：
