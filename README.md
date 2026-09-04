@@ -268,7 +268,7 @@ update-initramfs -u -k all
 
 如果到這邊都沒問題，接下來讓home的解鎖從root衍生（decrypt_derived），不需要另外生成一把home專屬的密鑰檔案。不用重啓電腦。
 
-> **警告**：此方法會讓home的解鎖能力完全綁定在root的LUKS header上——衍生出來的key本質上是root header的一個hash，不是獨立存在的密鑰。如果root的LUKS header損毀，或root被`luksFormat`（即使即使用同一組密碼重新格式化），home將**永久**無法解鎖，沒有備援。這跟前面`/crypthome.key`的獨立密鑰檔案方案不同，請自行評估風險；強烈建議搭配`cryptsetup luksHeaderBackup`備份root的header到別的磁碟。
+> **警告**：此方法會讓home的解鎖能力完全綁定在root的LUKS header上——衍生出來的key本質上是root header的一個hash，不是獨立存在的密鑰。如果root的LUKS header損毀，或root被`luksFormat`（即使即使用同一組密碼重新格式化），home將永久無法解鎖。備案：搭配`cryptsetup luksHeaderBackup`備份root的header到別的磁碟。
 
 先用root目前已解鎖的映射（`nvme0n1p6_crypt`）衍生一把key，加進home的LUKS header：
 
@@ -320,7 +320,7 @@ apt install network-manager network-manager-openvpn network-manager-config-conne
 nano /etc/NetworkManager/NetworkManager.conf
 ```
 
-```txt
+```ini
 [ifupdown]
 managed=false #改成`managed=true`
 ```
@@ -334,10 +334,41 @@ iface lo inet loopback
 #把其他都移除
 ```
 
+同步更改dns伺服器（NetworkManager生成的dns有時更新會連結不上）：
+
+```sh
+nano /etc/NetworkManager/conf.d/00-global-dns.conf
+```
+
+```ini
+[global-dns]
+searches=
+options=
+
+[global-dns-domain-*]
+servers=1.1.1.1,1.0.0.1
+```
+
+```sh
+sudo systemctl restart NetworkManager
+```
+
+應看到：
+
+```sh
+cat /etc/resolv.conf
+```
+
+```txt
+nameserver 1.1.1.1
+nameserver 1.0.0.1
+```
+
 然後重啟network manager：
 
 ```sh
-systemctl restart NetworkManager #執行完後等10秒
+systemctl restart NetworkManager
+sleep 20
 ```
 
 最後安裝 KDE：
@@ -352,7 +383,7 @@ apt install kde-plasma-desktop
 
 安裝完KDE不要移除konqueror，因爲kde-baseapps依賴konqueror（截至bookworm這個依賴關係是hard depends），而kde-baseapps是kde-plasma-desktop的上游依賴之一。移除konqueror會讓apt的dependency tree出問題；即使沒有立即報錯也不代表系統穩定，沒必要爲了省一點空間而冒險。
 
-最後再加splash screen（載入作業系統時登入前的特效，而不是tty的黑屏）：編輯`/etc/default/grub`，找到`GRUB_CMDLINE_LINUX_DEFAULT`並改成`splash`。執行`sudo update-grub`後重新啓動就能看到載入特效。
+最後再加splash screen（載入作業系統時登入前的特效，而不是tty的黑屏）：編輯`/etc/default/grub`，找到`GRUB_CMDLINE_LINUX_DEFAULT`並加上`splash`。執行`sudo update-grub`後重新啓動就能看到載入特效。
 
 到這裡就可以重啓電腦並拔掉乙太線。首要任務是開啟secure boot，因為前置作業關閉了它。
 
@@ -406,7 +437,23 @@ Xanmod的核心沒有被Debian的簽名鏈信任，secure boot開啓時無法直
 apt install sbsigntool
 ```
 
-生成MOK密鑰：
+If there are unwanted keys, remove them first:
+
+```sh
+mokutil --export
+
+ls -1 MOK*
+#MOK-0001.der
+#MOK-0002.der
+#MOK-0003.der
+#...
+
+#Check for signature match
+mokutil --list-enrolled
+mokutil --delete MOK-000x.der
+```
+
+再生成MOK密鑰：
 
 ```sh
 mkdir -p /root/mok-keys && cd /root/mok-keys
@@ -429,22 +476,6 @@ reboot
 ```sh
 mokutil --list-enrolled
 #elrick-secureboot-key
-```
-
-If there are unwanted keys, remove them as such:
-
-```sh
-mokutil --export
-
-ls -1 MOK*
-#MOK-0001.der
-#MOK-0002.der
-#MOK-0003.der
-#...
-
-#Check for signature match
-mokutil --list-enrolled
-mokutil --delete MOK-000x.der
 ```
 
 將密鑰轉化成pem格式（sbsign只吃PEM格式的憑證，MOK.der本身仍保留給日後mokutil --import用）：
@@ -635,44 +666,11 @@ GPU
 RADEON_DPM_PERF_LEVEL_ON_BAT=low
 ```
 
-最後確認使用schedutil：
-
-/etc/default/grub
+最後加上一些grub設定：
 
 ```
-GRUB_CMDLINE_LINUX_DEFAULT="quiet splash amd_pstate=active acpi.ec_no_wakeup=1 amdgpu.abmlevel=1 cpufreq.default_governor=schedutil"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash acpi.ec_no_wakeup=1 amdgpu.abmlevel=1"
 #grub-update
-```
-
-### 全域DNS伺服器更改
-創建全域DNS設置檔案：
-
-```sh
-nano /etc/NetworkManager/conf.d/00-global-dns.conf
-```
-
-```
-[global-dns]
-searches=
-options=
-
-[global-dns-domain-*]
-servers=1.1.1.1,1.0.0.1
-```
-
-```sh
-sudo systemctl restart NetworkManager
-```
-
-應看到：
-
-```sh
-cat /etc/resolv.conf
-```
-
-```txt
-nameserver 1.1.1.1
-nameserver 1.0.0.1
 ```
 
 ### Ryzen 電源限制
@@ -731,46 +729,7 @@ echo msr > /etc/modules-load.d/ryzenadj.conf
 modprobe msr
 ```
 
-只要看到一串數字就沒問題。`no compatible ryzen_smu kernel module found, fallback to /dev/mem`代表沒有安裝`ryzen_smu`並使用`/dev/mem`的備用選項。
-
-#### 安裝ryzen_smu
-上一步的`no compatible ryzen_smu kernel module found, fallback to /dev/mem`代表ryzenadj目前透過`/dev/mem`存取SMU而非`ryzen_smu`這個核心模組。若只是套用power limit（STAPM/fast/slow/tctl），`/dev/mem`已經足夠，可跳過此節；但若想嘗試Curve Optimizer（per-core undervolt），需要先裝`ryzen_smu`讓ryzenadj改用這個backend：
-
-```sh
-apt install dkms
-git clone https://github.com/amkillam/ryzen_smu /root/ryzen_smu
-cd /root/ryzen_smu
-apt install linux-headers-$(uname -r)
-cd /root/ryzen_smu
-make dkms-install
-```
-
-```sh
-mokutil --import /var/lib/dkms/mok.pub
-mokutil --list-new #會有密鑰
-reboot
-```
-
-系統已開啟Secure Boot，DKMS會自動生成一組簽名金鑰，流程跟前面Xanmod的MOK一樣：
-
-```sh
-mokutil --list-new
-reboot
-```
-
-重啓後進入藍色MOK畫面，選「Enroll MOK」輸入密碼，完成後reboot。確認模組已載入：
-
-```sh
-dmesg | grep -i ryzen_smu
-ls /sys/kernel/ryzen_smu_drv/
-```
-
-重新確認ryzenadj的backend：
-
-```sh
-ryzenadj -i
-#不應再出現 no compatible ryzen_smu kernel module found 的訊息
-```
+`no compatible ryzen_smu kernel module found, fallback to /dev/mem`代表沒有安裝`ryzen_smu`並使用`/dev/mem`的備用選項。沒有問題；Xanmod無法跟ryzen_smu兼容。
 
 #### 載入k10temp
 ```sh
@@ -816,7 +775,7 @@ WantedBy=multi-user.target
 nano /etc/udev/rules.d/96-ryzenadj-acpower.rules
 ```
 
-```
+```txt
 SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ACTION=="change", RUN+="/usr/bin/systemctl --no-block restart ryzenadj-tune.service"
 ```
 
@@ -851,7 +810,7 @@ systemctl daemon-reload
 udevadm control --reload
 systemctl enable --now ryzenadj-tune.service
 systemctl enable ryzenadj-resume.service
-echo balanced | sudo tee /sys/firmware/acpi/platform_profile   # 手動校正一次，之後交給TLP/udev/resume unit維持
+echo balanced | sudo tee /sys/firmware/acpi/platform_profile   #手動校正一次，之後交給TLP/udev/resume unit維持
 ```
 
 #### 確認程序
