@@ -929,10 +929,7 @@ ryzenadj -i
 journalctl -u ryzenadj-resume.service --since "5 min ago"
 ```
 
-最後測一次**拔掉電源開機**。這個情境不會觸發udev規則，只有開機時的那一次寫入，是唯一沒有補救機制的路徑。開機一分鐘後確認仍是16/12/55。
-
-### 選配：定時補寫
-如果上面任何一個測試出現「先套用成功、過一陣子被蓋回預設值」，代表有東西在背景週期性重寫SMU。加一個timer當作保險：
+最後測一次**拔掉電源開機**。這個情境不會觸發udev規則，只有開機時的那一次寫入，是唯一沒有補救機制的路徑。開機一分鐘後確認仍是16/12/55。如果上面任何一個測試出現「先套用成功、過一陣子被蓋回預設值」，代表有東西在背景週期性重寫SMU。加一個timer當作保險：
 
 ```sh
 nano /etc/systemd/system/ryzenadj-tune.timer
@@ -940,11 +937,10 @@ nano /etc/systemd/system/ryzenadj-tune.timer
 
 ```ini
 [Unit]
-Description=Re-apply RyzenAdj limits periodically
+Description=Apply RyzenAdj limits once boot has settled
 
 [Timer]
-OnBootSec=45
-OnUnitActiveSec=60
+OnBootSec=60
 AccuracySec=1s
 
 [Install]
@@ -958,8 +954,6 @@ systemctl list-timers ryzenadj-tune.timer
 ```
 
 再次提醒：timer要生效，`ryzenadj-tune.service`裡不能有`RemainAfterExit=yes`。
-
-如果沒有觀察到被蓋回的現象就不用裝。每分鐘叫醒CPU寫一次SMU對續航沒有幫助。
 
 ## KDE 黑屏修復
 如安裝了KDE重啓過電腦但仍還卡在tty，嘗試重新安裝sddm來修復 KDE：
