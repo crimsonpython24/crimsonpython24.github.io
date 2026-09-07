@@ -627,8 +627,9 @@ CPU_SCALING_MIN_FREQ_ON_AC=0
 CPU_SCALING_MAX_FREQ_ON_AC=0
 CPU_SCALING_MIN_FREQ_ON_BAT=0
 CPU_SCALING_MAX_FREQ_ON_BAT=0
-PLATFORM_PROFILE_ON_BAT=balanced #不要用low-power不然ryzenadj無法寫入
 NMI_WATCHDOG=0
+PLATFORM_PROFILE_ON_AC=performance
+PLATFORM_PROFILE_ON_BAT=balanced
 ```
 
 Audio Codec
@@ -673,8 +674,21 @@ GRUB_CMDLINE_LINUX_DEFAULT="quiet splash acpi.ec_no_wakeup=1 amdgpu.abmlevel=1"
 #grub-update
 ```
 
-### Ryzen 電源限制
-#### 檢察核心鎖定
+## Ryzen 電源限制
+
+此章節在AC供電時套用韌體預設值，電池供電時降到16W/12W/55°C。所有邏輯集中在一個script（`/usr/local/sbin/ryzenadj-apply`），三個systemd/udev觸發點都呼叫它，不要在各處重複寫死數值。
+
+檔案清單：
+
+| 檔案 | 用途 |
+| --- | --- |
+| `/usr/local/sbin/ryzenadj-apply` | 判斷AC/電池並套用對應限制 |
+| `/etc/systemd/system/ryzenadj-tune.service` | 開機時執行一次 |
+| `/etc/udev/rules.d/96-ryzenadj-acpower.rules` | 插拔電源時重跑 |
+| `/etc/systemd/system/ryzenadj-resume.service` | 睡眠喚醒後重跑 |
+| `/etc/systemd/system/ryzenadj-tune.timer` | 選配，定時重跑 |
+
+### 檢察核心鎖定
 確認Lockdown LSM不會干預Ryzenadj的MSR寫入和PCI權限：
 
 ```sh
@@ -683,7 +697,7 @@ cat /sys/kernel/security/lockdown
 
 如顯示任何除了`[none] integrity confidentiality`的提示，必須重新設置Secure boot（此系統未遇到著問題，所以只是揣測）。
 
-#### 開啟P-state
+### 開啟P-state
 ```sh
 nano /etc/default/grub
 ```
@@ -705,7 +719,7 @@ cat /sys/devices/system/cpu/amd_pstate/status
 #active
 ```
 
-#### 安裝Ryzenadj
+### 安裝Ryzenadj
 ```sh
 apt install git cmake libpci-dev g++ make
 git clone --recursive https://github.com/FlyGoat/RyzenAdj.git /root/RyzenAdj
@@ -717,6 +731,7 @@ make install
 ```
 
 Install:
+
 ```sh
 apt install lm-sensors
 sensors-detect
@@ -731,22 +746,88 @@ modprobe msr
 
 `no compatible ryzen_smu kernel module found, fallback to /dev/mem`代表沒有安裝`ryzen_smu`並使用`/dev/mem`的備用選項。沒有問題；Xanmod無法跟ryzen_smu兼容。
 
-#### 載入k10temp
+### 載入k10temp
 ```sh
 modprobe k10temp
 echo k10temp > /etc/modules-load.d/k10temp.conf
 ```
 
-執行`sensor`應看到：
+執行`sensors`應看到：
 
 ```sh
 sensors
 #k10temp-pci-... 和 Tctl
 ```
 
-#### 開啟背景程序
-建立主要的power-limit service（sleep 2秒讓TLP的處理先跑完，避免platform_profile的寫入蓋掉ryzenadj設定）：
+### 記錄韌體預設值
+ryzenadj沒有「恢復預設」的指令，一旦寫入SMU就無法把控制權交還韌體，所以AC的設定只能把預設值明確寫回去。先在還沒有任何ryzenadj service干預的狀態下記錄這些數字。如果之前已經設置過service，先停掉再重開機：
 
+```sh
+systemctl stop ryzenadj-tune.service ryzenadj-tune.timer 2>/dev/null
+systemctl disable ryzenadj-tune.service ryzenadj-tune.timer 2>/dev/null
+reboot
+```
+
+插着電源開機後：
+
+```sh
+ryzenadj -i | grep -E "STAPM LIMIT|PPT LIMIT FAST|PPT LIMIT SLOW|THM LIMIT CORE"
+#| STAPM LIMIT      |    27.921 | stapm-limit  |
+#| PPT LIMIT FAST   |    28.000 | fast-limit   |
+#| PPT LIMIT SLOW   |    24.000 | slow-limit   |
+#| THM LIMIT CORE   |    86.000 | tctl-temp    |
+```
+
+以上為此機（Ryzen 5 Pro 6650U / T14）的數值，下面的script直接沿用。不同機型請以自己的輸出為準。順帶拔掉電源再看一次；部分韌體的電池預設值跟AC不同，若如此則只需寫死AC那組。
+
+> STAPM是長時間的平均功耗上限，跟fast/slow limit是不同的暫存器。原本的設定沒有寫`--stapm-limit`，導致開機後STAPM停在27.921而不是16——韌體有時會自己把STAPM收斂到fast limit，但不保證。下面的script兩者都明確寫入。
+
+### 建立套用script
+```sh
+nano /usr/local/sbin/ryzenadj-apply
+```
+
+```sh
+#!/bin/sh
+set -eu
+
+RYZENADJ=/usr/local/bin/ryzenadj
+
+on_ac() {
+    for ps in /sys/class/power_supply/*; do
+        [ -r "$ps/type" ] && [ -r "$ps/online" ] || continue
+        [ "$(cat "$ps/type")" = "Mains" ] || continue
+        [ "$(cat "$ps/online")" = "1" ] && return 0
+    done
+    return 1
+}
+
+if on_ac; then
+    exec "$RYZENADJ" --stapm-limit=28000 --fast-limit=28000 \
+                     --slow-limit=24000 --tctl-temp=86
+else
+    exec "$RYZENADJ" --stapm-limit=16000 --fast-limit=16000 \
+                     --slow-limit=12000 --tctl-temp=55
+fi
+```
+
+```sh
+chmod 700 /usr/local/sbin/ryzenadj-apply
+```
+
+用`type == Mains`比對而不是假設裝置叫`AC0`或`ADP1`，因為不同世代的ThinkPad命名不一樣。確認能正確判斷：
+
+```sh
+grep . /sys/class/power_supply/*/type
+#/sys/class/power_supply/AC0/type:Mains
+#/sys/class/power_supply/BAT0/type:Battery
+
+cat /sys/class/power_supply/AC*/online   #1=插電, 0=電池
+/usr/local/sbin/ryzenadj-apply
+ryzenadj -i | grep -E "STAPM LIMIT|PPT LIMIT FAST"
+```
+
+### 開機觸發
 ```sh
 nano /etc/systemd/system/ryzenadj-tune.service
 ```
@@ -754,22 +835,27 @@ nano /etc/systemd/system/ryzenadj-tune.service
 ```ini
 [Unit]
 Description=Apply RyzenAdj power limits
-After=multi-user.target tlp.service
+After=tlp.service
 Wants=tlp.service
 
 [Service]
 Type=oneshot
-RemainAfterExit=yes
 ExecStartPre=/sbin/modprobe msr
 ExecStartPre=/bin/sleep 2
-ExecStart=/usr/local/bin/ryzenadj --fast-limit=16000 --slow-limit=12000 --tctl-temp=55
+ExecStart=/usr/local/sbin/ryzenadj-apply
 
 [Install]
 WantedBy=multi-user.target
 ```
 
-#### AC/電池切換觸發
-建立udev規則，在AC供電狀態改變時重新套用限制：
+跟舊版的差異有三點：
+
+- 移除`RemainAfterExit=yes`。oneshot加上這個之後會停在active狀態，後面的timer對已經active的unit下`start`會變成靜默的no-op，看起來有跑其實沒跑。udev的`restart`不受影響，但為了timer能用還是拿掉。
+- 移除`After=multi-user.target`。unit本身被`WantedBy=multi-user.target`拉起，再把自己排在該target之後是多餘的，只會讓啟動時間變得不可預期。
+- `sleep 2`保留，讓TLP的寫入先跑完。
+
+### AC/電池切換觸發
+不用改，跟原本一樣：
 
 ```sh
 nano /etc/udev/rules.d/96-ryzenadj-acpower.rules
@@ -779,9 +865,9 @@ nano /etc/udev/rules.d/96-ryzenadj-acpower.rules
 SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ACTION=="change", RUN+="/usr/bin/systemctl --no-block restart ryzenadj-tune.service"
 ```
 
-#### Suspend/Resume觸發
-建立resume-hook unit（不需要shell script，用systemd的sleep.target掛鉤機制）：
+service現在會自己判斷AC狀態，所以這條規則不需要分插電/拔電兩種情況。
 
+### Suspend/Resume觸發
 ```sh
 nano /etc/systemd/system/ryzenadj-resume.service
 ```
@@ -796,37 +882,84 @@ StopWhenUnneeded=yes
 Type=oneshot
 RemainAfterExit=yes
 ExecStart=/bin/true
-ExecStop=/bin/sh -c 'sleep 2 && /usr/local/bin/ryzenadj --fast-limit=16000 --slow-limit=12000 --tctl-temp=55'
+ExecStop=/bin/sh -c 'sleep 2 && /usr/local/sbin/ryzenadj-apply'
 
 [Install]
 WantedBy=sleep.target
 ```
 
-原理：進入睡眠時sleep.target會拉起這個unit（ExecStart=/bin/true只是標記為active）；喚醒後sleep.target被拆掉，StopWhenUnneeded讓這個unit跟著stop，觸發ExecStop重新套用限制。
+只有`ExecStop`那行改成呼叫script。這個unit的`RemainAfterExit=yes`**必須保留**——ExecStop的機制就是靠它。原理：進入睡眠時sleep.target會拉起這個unit（`ExecStart=/bin/true`只是標記為active）；喚醒後sleep.target被拆掉，`StopWhenUnneeded`讓這個unit跟著stop，觸發ExecStop重新套用限制。
 
-#### 套用設定
+### 套用設定
 ```sh
 systemctl daemon-reload
 udevadm control --reload
 systemctl enable --now ryzenadj-tune.service
 systemctl enable ryzenadj-resume.service
-echo balanced | sudo tee /sys/firmware/acpi/platform_profile   #手動校正一次，之後交給TLP/udev/resume unit維持
 ```
 
-#### 確認程序
-```sh
-#重新啟動後
-ryzenadj -i
+`platform_profile`交給TLP的`PLATFORM_PROFILE_ON_BAT=balanced`維持即可，不需要手動`echo`。注意TLP的設定是先讀`/usr/share/tlp/defaults.conf`再疊上`/etc/tlp.conf`，所以把`/etc/tlp.conf`的某行comment掉並不等於停用該設定，只是退回shipped default。要真的讓TLP不碰某個項目，得覆寫成空值（`PLATFORM_PROFILE_ON_BAT=""`）。
 
-#休息/resume
+### 確認程序
+開機（插電）後：
+
+```sh
+ryzenadj -i | grep -E "STAPM LIMIT|PPT LIMIT FAST|PPT LIMIT SLOW|THM LIMIT CORE"
+#應為28/28/24/86
+```
+
+拔掉電源，等幾秒讓udev規則跑完：
+
+```sh
+ryzenadj -i | grep -E "STAPM LIMIT|PPT LIMIT FAST"
+#應為16/16
+
+sleep 60
+ryzenadj -i | grep -E "STAPM LIMIT|PPT LIMIT FAST"
+#確認沒有被蓋回28
+```
+
+睡眠測試：
+
+```sh
 systemctl suspend
 
 #醒來後
 ryzenadj -i
 journalctl -u ryzenadj-resume.service --since "5 min ago"
-
-ryzenadj -i | grep -E "STAPM LIMIT|PPT LIMIT FAST|PPT LIMIT SLOW|THM LIMIT CORE"
 ```
+
+最後測一次**拔掉電源開機**。這個情境不會觸發udev規則，只有開機時的那一次寫入，是唯一沒有補救機制的路徑。開機一分鐘後確認仍是16/12/55。
+
+### 選配：定時補寫
+如果上面任何一個測試出現「先套用成功、過一陣子被蓋回預設值」，代表有東西在背景週期性重寫SMU。加一個timer當作保險：
+
+```sh
+nano /etc/systemd/system/ryzenadj-tune.timer
+```
+
+```ini
+[Unit]
+Description=Re-apply RyzenAdj limits periodically
+
+[Timer]
+OnBootSec=45
+OnUnitActiveSec=60
+AccuracySec=1s
+
+[Install]
+WantedBy=timers.target
+```
+
+```sh
+systemctl daemon-reload
+systemctl enable --now ryzenadj-tune.timer
+systemctl list-timers ryzenadj-tune.timer
+```
+
+再次提醒：timer要生效，`ryzenadj-tune.service`裡不能有`RemainAfterExit=yes`。
+
+如果沒有觀察到被蓋回的現象就不用裝。每分鐘叫醒CPU寫一次SMU對續航沒有幫助。
 
 ## KDE 黑屏修復
 如安裝了KDE重啓過電腦但仍還卡在tty，嘗試重新安裝sddm來修復 KDE：
