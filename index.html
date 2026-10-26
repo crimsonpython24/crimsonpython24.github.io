@@ -1,0 +1,1174 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description"
+        content="Warren Wang: full-stack and backend software engineer. USC B.S./M.S. Computer Science (May 2027), former AWS software engineer intern and startup tech lead." />
+    <meta name="author" content="Yu-Jen Warren Wang" />
+    <link rel="canonical" href="https://crimsonpython24.github.io/" />
+    <meta property="og:type" content="profile" />
+    <meta property="og:title" content="Warren Wang - Software Engineer" />
+    <meta property="og:description"
+        content="Full-stack engineer. USC Computer Science '27, ex-SDE intern at AWS, ex-startup tech lead." />
+    <meta property="og:url" content="https://crimsonpython24.github.io/" />
+    <link rel="icon"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%23222'/%3E%3Ctext x='32' y='44' font-family='Helvetica,Arial,sans-serif' font-size='34' font-weight='700' fill='%23fff' text-anchor='middle'%3EW%3C/text%3E%3C/svg%3E" />
+
+    <title>Warren Wang - Software Engineer</title>
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css"
+        integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous" />
+
+    <!-- Custom styles for this template -->
+    <style>
+        /* GLOBAL STYLES
+      -------------------------------------------------- */
+        body {
+            padding-top: 50px;
+            padding-bottom: 40px;
+            color: #5a5a5a;
+        }
+
+        [id] {
+            scroll-margin-top: 60px;
+        }
+
+        /* Grayscale overrides for Bootstrap's blue */
+        a {
+            color: #333;
+        }
+
+        a:hover,
+        a:focus {
+            color: #000;
+        }
+
+        .btn-primary {
+            background-color: #333;
+            border-color: #222;
+        }
+
+        .btn-primary:hover,
+        .btn-primary:focus,
+        .btn-primary:active,
+        .btn-primary.active,
+        .open>.dropdown-toggle.btn-primary,
+        .btn-primary:active:hover,
+        .btn-primary:active:focus {
+            background-color: #111;
+            border-color: #000;
+        }
+
+        /* CUSTOMIZE THE CAROUSEL
+      -------------------------------------------------- */
+        .carousel {
+            height: 500px;
+            margin-bottom: 60px;
+        }
+
+        .carousel .item {
+            height: 500px;
+            background-color: #777;
+        }
+
+        .carousel .item.slide-2 {
+            background-color: #666;
+        }
+
+        .carousel .item.slide-3 {
+            background-color: #555;
+        }
+
+        .carousel-caption {
+            z-index: 10;
+            bottom: 40px;
+        }
+
+        .carousel-caption.text-left {
+            text-align: left;
+        }
+
+        .carousel-caption.text-right {
+            text-align: right;
+        }
+
+        .carousel-caption .btn {
+            text-shadow: none;
+        }
+
+        .carousel-control.left,
+        .carousel-control.right {
+            background-image: none;
+        }
+
+        /* MARKETING CONTENT
+      -------------------------------------------------- */
+        .marketing .col-lg-4 {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .marketing h2 {
+            font-weight: normal;
+        }
+
+        .marketing .col-lg-4 p {
+            margin-right: 10px;
+            margin-left: 10px;
+        }
+
+        .marketing .img-circle,
+        .marketing .circle {
+            display: block;
+            width: 140px;
+            height: 140px;
+            margin: 0 auto;
+        }
+
+        .marketing .img-circle {
+            border: 1px solid #ddd;
+        }
+
+        .marketing .circle {
+            border-radius: 50%;
+            background-color: #777;
+            color: #fff;
+            font-size: 36px;
+            font-weight: 300;
+            line-height: 140px;
+            letter-spacing: -1px;
+        }
+
+        /* FEATURETTES
+      -------------------------------------------------- */
+        .featurette-divider {
+            margin: 80px 0;
+        }
+
+        .featurette-heading {
+            font-weight: 300;
+            line-height: 1;
+            letter-spacing: -1px;
+        }
+
+        .featurette-meta {
+            margin: 14px 0 18px;
+        }
+
+        .featurette-stat {
+            position: relative;
+            max-width: 500px;
+            margin: 0 auto;
+            background-color: #eee;
+        }
+
+        .featurette-stat:before {
+            content: "";
+            display: block;
+            padding-top: 100%;
+        }
+
+        .featurette-stat .inner {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            -webkit-transform: translateY(-50%);
+            transform: translateY(-50%);
+            text-align: center;
+        }
+
+        .featurette-stat .num {
+            display: block;
+            font-size: 96px;
+            font-weight: 300;
+            line-height: 1;
+            letter-spacing: -3px;
+            color: #555;
+        }
+
+        .featurette-stat .cap {
+            display: block;
+            margin-top: 12px;
+            font-size: 18px;
+            color: #999;
+        }
+
+        .earlier .list-group-item-heading small {
+            color: #999;
+        }
+
+        /* ALBUM (projects)
+      -------------------------------------------------- */
+        .section-intro {
+            padding: 30px 15px 40px;
+            text-align: center;
+        }
+
+        .section-intro h1 {
+            font-weight: 300;
+        }
+
+        .section-intro .lead {
+            max-width: 640px;
+            margin: 0 auto;
+        }
+
+        .album {
+            padding: 50px 0 30px;
+            background-color: #f7f7f7;
+        }
+
+        .album .row-eq {
+            display: -webkit-flex;
+            display: flex;
+            -webkit-flex-wrap: wrap;
+            flex-wrap: wrap;
+        }
+
+        .album .row-eq:before,
+        .album .row-eq:after {
+            display: none;
+        }
+
+        .album .row-eq>[class*="col-"] {
+            display: -webkit-flex;
+            display: flex;
+        }
+
+        .album .thumbnail {
+            display: -webkit-flex;
+            display: flex;
+            -webkit-flex-direction: column;
+            flex-direction: column;
+            width: 100%;
+            margin-bottom: 30px;
+            padding: 0;
+            border-color: #e5e5e5;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+        }
+
+        .thumb-placeholder {
+            display: -webkit-flex;
+            display: flex;
+            -webkit-align-items: center;
+            align-items: center;
+            -webkit-justify-content: center;
+            justify-content: center;
+            height: 225px;
+            padding: 0 20px;
+            border-radius: 3px 3px 0 0;
+            background-color: #55595c;
+            color: #eceeef;
+            font-size: 15px;
+            text-align: center;
+        }
+
+        .album .caption {
+            -webkit-flex: 1;
+            flex: 1;
+            display: -webkit-flex;
+            display: flex;
+            -webkit-flex-direction: column;
+            flex-direction: column;
+            padding: 16px 18px 18px;
+        }
+
+        .album .caption h3 {
+            margin-top: 4px;
+            font-size: 20px;
+        }
+
+        .album .card-footer {
+            margin-top: auto;
+            padding-top: 6px;
+        }
+
+        .album .card-footer small {
+            line-height: 30px;
+        }
+
+        /* STACK OVERFLOW + EDUCATION
+      -------------------------------------------------- */
+        .stats-table {
+            margin-bottom: 30px;
+        }
+
+        .stats-table td:last-child {
+            text-align: right;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .skills h4 {
+            margin-top: 22px;
+        }
+
+        .skills .label {
+            display: inline-block;
+            margin: 0 2px 6px 0;
+            padding: 0.4em 0.7em;
+            font-size: 85%;
+            font-weight: normal;
+        }
+
+        .edu .badge {
+            margin-left: 6px;
+            vertical-align: 1px;
+        }
+
+        .edu .coursework .label {
+            display: inline-block;
+            margin: 0 2px 6px 0;
+            padding: 0.4em 0.7em;
+            font-weight: normal;
+            background: #f0f0f0;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        /* CONTACT JUMBOTRON + FOOTER
+      -------------------------------------------------- */
+        .jumbotron.contact {
+            margin-top: 80px;
+            text-align: center;
+        }
+
+        .jumbotron.contact .btn {
+            margin: 4px;
+        }
+
+        .jumbotron .contact-links {
+            margin-top: 18px;
+            font-size: 15px;
+            font-weight: normal;
+        }
+
+        footer {
+            padding-top: 30px;
+        }
+
+        /* RESPONSIVE CSS
+      -------------------------------------------------- */
+        @media (min-width: 768px) {
+            .carousel-caption p {
+                margin-bottom: 20px;
+                font-size: 21px;
+                line-height: 1.4;
+            }
+
+            .featurette-heading {
+                font-size: 50px;
+            }
+        }
+
+        @media (min-width: 992px) {
+            .featurette-heading {
+                margin-top: 110px;
+            }
+        }
+
+        @media (max-width: 767px) {
+
+            .carousel,
+            .carousel .item {
+                height: 460px;
+            }
+
+            .carousel-caption h1 {
+                font-size: 30px;
+            }
+
+            .featurette-divider {
+                margin: 50px 0;
+            }
+
+            .featurette-heading {
+                font-size: 34px;
+            }
+
+            .featurette-stat {
+                max-width: none;
+                margin-top: 10px;
+            }
+
+            .featurette-stat:before {
+                padding-top: 45%;
+            }
+
+            .featurette-stat .num {
+                font-size: 64px;
+            }
+
+            .featurette-stat .cap {
+                font-size: 16px;
+                margin-top: 6px;
+            }
+
+            .jumbotron.contact h1 {
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar"
+                    aria-expanded="false" aria-controls="navbar">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">Warren Wang</a>
+            </div>
+            <div id="navbar" class="navbar-collapse collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#experience">Experience</a></li>
+                    <li><a href="#projects">Projects</a></li>
+                    <li><a href="#stackoverflow">Stack Overflow</a></li>
+                    <li><a href="#education">Education</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="resume.pdf" target="_blank" rel="noopener">Résumé (PDF)</a>
+                    </li>
+                </ul>
+            </div>
+            <!--/.nav-collapse -->
+        </div>
+    </nav>
+
+    <!-- Carousel
+    ================================================== -->
+    <div id="myCarousel" class="carousel slide" data-ride="carousel" data-interval="7000">
+        <ol class="carousel-indicators">
+            <li data-target="#myCarousel" data-slide-to="0" class="active"></li>
+            <li data-target="#myCarousel" data-slide-to="1"></li>
+            <li data-target="#myCarousel" data-slide-to="2"></li>
+        </ol>
+        <div class="carousel-inner" role="listbox">
+            <div class="item active">
+                <div class="container">
+                    <div class="carousel-caption text-left">
+                        <h1>Hi, I&rsquo;m Warren Wang.</h1>
+                        <p>
+                            I&rsquo;m a full-stack engineer finishing a B.S. and M.S. in
+                            Computer Science at USC (May 2027). I build fast, secure
+                            backends and the web apps that sit on top of them.
+                        </p>
+                        <p>
+                            <a class="btn btn-lg btn-primary" href="mailto:usc430vazw@protonmail.com"
+                                role="button">Email me</a>
+                            <a class="btn btn-lg btn-default" href="resume.pdf" target="_blank" rel="noopener"
+                                role="button">Download
+                                résumé</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="item slide-2">
+                <div class="container">
+                    <div class="carousel-caption">
+                        <h1>Most recently: AWS.</h1>
+                        <p>
+                            As a software engineer intern, I built a pipeline event-indexing
+                            service that gives an on-call AI assistant sourced answers,
+                            cutting triage time by 60%.
+                        </p>
+                        <p>
+                            <a class="btn btn-lg btn-primary" href="#experience" role="button">See my experience</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="item slide-3">
+                <div class="container">
+                    <div class="carousel-caption text-right">
+                        <h1>272K people helped.</h1>
+                        <p>
+                            Six years answering questions on Stack Overflow, and once in the
+                            top 0.3% of Django answerers (Q3 2020).
+                        </p>
+                        <p>
+                            <a class="btn btn-lg btn-primary" href="#stackoverflow" role="button">Browse my answers</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <a class="left carousel-control" href="#myCarousel" role="button" data-slide="prev">
+            <span class="icon-prev" aria-hidden="true"></span>
+            <span class="sr-only">Previous</span>
+        </a>
+        <a class="right carousel-control" href="#myCarousel" role="button" data-slide="next">
+            <span class="icon-next" aria-hidden="true"></span>
+            <span class="sr-only">Next</span>
+        </a>
+    </div>
+    <!-- /.carousel -->
+
+    <!-- Marketing messaging and featurettes
+    ================================================== -->
+    <div class="container marketing" id="about">
+        <!-- Three columns of text below the carousel -->
+        <div class="row">
+            <div class="col-lg-4">
+                <img class="img-circle"
+                    src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/wgALCAEYARgBAREA/8QAGwABAAEFAQAAAAAAAAAAAAAAAAECAwQFBgf/2gAIAQEAAAAB9UAAAAAAAAAAAAAAAAAAABY1eHk52bWAAAAaHzPk7FM3Nv6D31wAAAHH+L40ilX13sGxAAAHOeF48VTNKqiOl9uzQAAGP4HrNou0qovZXMY3sXegAAOB8k7HvL1dSLdFrz/luq9tAAAeS8R6V1VyKE0U2+R4bP8AfQAAHlXFejdTXFExEW9H57ke8AAAOD889G3tygiIowfO872UAAByvFdvpsfabhiaOc/M5LK9LAAAYXE77FqsZ93Cx8a1sdfsuwAAA12ms7DSYGx3F3H0WPm7fUZO92wAAMLTY22im2qsq4uaXN2W5AAA5idhVaooi1evVWdZr+6vAAAa/Du1UY+JkUMyq3r7/SgAAGBjTFnCuY+ZkzQ2WUAAAWtZMUWaZuVzRtr4AAAjUw0+rqnd5Uxu5AAADAxGPh0znXGXsgAAAUaSYRTVFO5yQAAAU6S1eUVUWa93kAAAAo1WHjJinJyM/PAAADi8zY0Y+DYv5d6unXbPeAAAcvw+x7eZt21Fd2I5zzPtvS8kAA5vz7m7O89bqTaouVIjzXka9j6H21wAOc885+3Raq7H0eqqmFVNfL+WW7lVe49M6YBzvnvOURapU17jvemrpqYHC8ZbmapmrsfUMoY/lXKURFpKaFd3d59Oo1NCoisq2vrW+R49y1E00SCaUTCZBFRVkeudVw3ltoiYmJRIglAKairL9v8AEMSiUokQkQTAITE1dRy9uJmSYmCQEAiJRVX/AP/EAC8QAAEEAQIFBAAEBwAAAAAAAAIAAQMEBRAREhMgMUAGFCEwIzNBUBUiJCUyNGD/2gAIAQEAAQUC/wC4kljjUmVpxsWcoiwZamQjcrkIkxN5eRycNIL2fs2BkmOR91ut3TSlw0clPVel6ijIozGQfIzuVakEspSHpstuhn2WGyp0zpW4rcfjZvIexrTSnKfRstlsuFOO2mKyD05Kc7Wa/iTytDFkrZ3LIBxu1b4eoSGk7p6MiejIy9hI6ehKyCnIpKG0ckez9n9K2OZW8T1dK41e6xFRjQVwFuUyYGXCy4GXCy4GXLZGDbZKFhOQdl6Yk4cj4nq097cTLDflNpt0baEsrHuMorBsX8R8T1ZG/uIliviNvpvj+HN3wbf3TxPVgO9eEPmhG4xN9DqwPEFqPYvTcfFlPE9Rhx4/Ewc05DGECyYs7ZoN4cjDKmLfSWcYxLLAyHKxE0dsJF3bLRbN6Vj/ABvEsCM8OFBxGWIZU1OunrQJ6se8bbMjjEnenESLF13T40RVcSEcv8VPTEfDR8O/I8VcGIo8cOwn2KKU5cpVkkaq0gCCdfrbOX22M551YZ5ULLMt/RV+OKKhY57eFbDmQOfDHjvmBcKIVwrsnfTh3TRMnj0yn+oBCY4uPgh8O2Gw1REYm0fV2Td2TJ06uBzYanycI8Mfh2o+Jh1dfr7yDnFKIMJxysDptHU8byKpE3H4soMPQQoa8bGUTGMMAQsIbJtRjc1BHyx8WVtw6N2W6bphbaPx376WLDiuaa5sqay4vCfMDTu7dvHsN86GLOv5WTEC4WJwbZtKzbl5BtuOvCy4BXDtq7qv+V5BdjZMSZPoydOSBlB+X5Bf4ujFc1xXuGXPZc9lxuSEdK5eRlc17SxTluSCnZFGzo669uhhZkLM3RLdkoqplK1l/DyGYhrCeZtmeC2km1foZltrnHZqPGsVmzhaCeOcPvu5evXV7K2LSJ91usVa9taZ2IdXFcK26c/a5kroVWsyQHj86JoDGQfru5evWV7K2LKd9HdfqsPlOQhdibR+rL5EawE7u+rOqWQmqFj8vBa+m7lq9ZX8vPZTvq5a9kyo356hVMzXmQEJt0WLcFdr+bORid3dMu3QzrF5qSuq88diPonmCCPJ5eWynfV3Xfp21jkKN48vcBNnrKLPWnU2RtTLf66N2WpLjMlFdHR32bNZF7czvrv9O3T8rbr7dMchAWFyfvAXqS9y4n8vt0wTFDLjbg3a1iYppH/YcFd9rcdF+wsv/8QAOBAAAgADAwkHAwEJAAAAAAAAAQIAAxESITEQICIwQEFRYXEEEyMyM1KBUGKhFEJgcnORorHB0f/aAAgBAQAGPwL9+PEdV6mKmcp6QD3legionCAyzVoYqpqNsNo2nH7IikvwV+2KzHZjzOZS0aQBLmNY3iAk5Sv3QGU1G02JRBnn8QXe9jqbLaUs7uEWpZ+Nn0fVbywWmEljx1dodISauB2VpjGgUVhnY9OWXCvSLgYwjAxcpjyxepitDXKZbEkrsstBgxvyVaPKIwjDMwy1pkReOyom4LrpJHHZVezdTHWGDWJVBW/ZZR3A5BXVEQYBvuFdlr7WrF+AipujC6L0PxGiTlJMeRslxyWhvic/AU2V5dVNRE0Hc1I0xWPTEXS1/pFyxTJeIvURgR0MeG5ijwYZvc+yMVxjTx4iJ38w5AXY2PYsD9No3UI3wivfdfyzHdbYYYKpp8wXnTZqtuLHGKThX7hkPUQq2rKKMFhsdHjsbCBzhjxc6nAZT1H+YoOsFvca7IwG41gBNYVh2+IUcBsloYjNvjuu8W3wrFSRTnFUYHoc0AGg3wFUUQbNUZtoItrjBDCo4RSUgUHhm3RfedmObjGOcNoplKgGLkPzHp/mBotFctNprmaWW7LXhtJzL4wzRtJ+hnLfmXZbO0Ds/Z5Xezd8F+12Ergi/wC8y7PBcGbJbnesWVey/tbZCJdJszlhHqU5CJ0175p36xgd+QS+0acsb94i1KcMOWwEKe8fgsULWU9q5QW8huMVGGrEtTcuW1KcqYC9qFk+4YQGQhlO8awqD3j8FggtZT2rnd12gmxubhFVNQdSZaGs0/iKnHNrLa72nCArHu5nA6mle8fgsUtWJftXMuzfDaqe04RSZ4Tc8IqjBhyzfFmKOW+CvZgUHuOMVN5i7PCT6zJX5EB5TBlOaXmtZUQUTQlcOOrvyVRip5GPVtfxCseSUfiLhLHxGnOanAXay3KbqNxinlm71y1OEWV9FfLz56/CMIw1wZDQjfFib66/3ZP0yHTbzdPoKvLNGWBMFxwYcDDTHNWY/QlqfCfRb/v0T//EACkQAQACAQMEAgICAwEBAAAAAAEAESExQVEQQGFxgZEgoTDBsdHwYPH/2gAIAQEAAT8h/wDcf4UCVUl1vYRGX2Ewa6vOsdBKxuU4cg94tgyrszDrctl+Z5/3ZHPeXlW8+mi5l4F24YHqaDXb5gklLE7lTt4lnbNq7y2UsyhGel0x9Evg7q/aCdvlanbhYzSHHmMVS1UBcyoY6Oi46uZaDUjQKR5vGC4mjS/vtS9WhZZXLw2EQQn/AAGYdVciFNh4SphZ/UGH9UBXApw8StGiWKaVLbU+JnjYywGOK7VK0u5a1K0cwBKHQhgwJw0u2J4yPFKdkeAmwypI1w4jCOlO1dhaT8stzVwHvcGIEcJUqVGEgsmZrEAM2eZSm6k7TS5WPNgcBpDWVU09Fx+DEjCQdKmIaHWIEG5ZeIdoDTJtiIrpofROj1erzT28LckE7X1ggbzzyyICYn7YHKnMUVBdkhGyLL4MRvXJgRXuFXR4imLJB2rCZ2aAe1umGKc5ms/LVFQ2hCr5/QEBsA+JikfMcZpsajdymbJ4WDs3mZn4lm6t+sdpqlcE4S+Caktc8CJMxc8OpQxUvcKwK3GPA/VXiHSUlXGUYJaa28oBWSgEXNS4lo4HD8SynaWAbyR11R/3mMN1Kvs3OBkhyGAFWf3KsqEgwBA1QKhmJjyb1BlUVDkdB4vPboljat2ZyRQVtT1NJC7fcEdOhamvSVUdJqimjpUCtRfhlytinvtTSkiE1qnfpc0RRhoP26OSBq7J9j3S9rh/AKHZy8TdWL5h2iQTRtm3RlkYBPjmFUTVbxT1WCYsaw+Zj1a5a7b9g6scxO4SWN470eh0Z7znt0sqGktujFbJyELa95VKTN/UWcHioVG4S4FA3goHHcUg6OGXLshvkjRQIncxCxAqDUKly5aPTuRCeJo5l9L9BLtkAsEvpsGsNdyfpTFZrLvfQpmKMlWkTV1ml89z+tDiNdk2W5yzyx5ZoTK8usJrr2dx4kJnDxjVgoCcPJ5X9TboawSyL3lmuFzRCBKxGOqFWcn3uQrYPAvrs1DVj68BYe2OXHw0R1g216xMTaV0XGq16IzAjKmuhoijJrBbcQ239w/53ae/51ohoZ4swe2WHxgPnmOJqv7l0q+EhBRW/VL60MDpUMTJpre4oqIHI9xlM3/GSaREEsf5GqB9Q+WI2P4j55isWAe5dJdGXDow/wD7fEHkyBN/zEqFCFofsxWirKx1r7hLikur55F8TLo7+F8P8Fy/P6n7Ym2cxX27y2L02Pt1z5HEV6QV5DWf6lNf/wB2Z50IriZlSpUXqhyv6T5U7HriKlUyq6xVx9oKh9PwpYmjyn6f9Tfbgbe/xK5q1irXjOfZlsvoBrFdWnH4udjTLr+0GeWvVSrMXBQbX5D/AHCPn8/7hyW3hfqKXzF+WUuv1+GkHqMwZbJoeSCQhmV/xz1J0AZV2ipaXD/J0L6Ow1m9uv8AByMSnwy3f9pflL4U+BPJWGNPy5bQzp0IMZi6wOSFZAG2znoHI1m3D5ji9L2JXbjbx+AxorrGEfEje7hY+8OPwIgK1LdDiHXxFGHd31uOmuZ//9oACAEBAAAAEP8A/wD/AP8A/wD/AP8A/wD/AP8A/wD/AP8A/wD/AJv/AP8A/wDcH/8A/wDlr/8A/wD46D//AP8AJV//AP8A+w3/AP8A/Kvn/wD/AAJS/wD/AOzjP/8A/wC1P/8A/wConP8A/wDz3y//AP8AJun/AP8Ajnh//wD4dlf/AP8AYNP/AP8A9EN//wD/AI2//wD/AOED/wD/AP17f/8A/wDD7/8A/wD4o/8A/wD/AN/H/wD9VJd//jEih/8AZfKU/wC5bGBP6WtBudiXwR7/AK1Ac6/ZIZdwNf1wCBL/AP/EACkQAQACAgEDBAICAwEBAAAAAAEAESExQVFhcRBAgaGRsSDBMNHhYPH/2gAIAQEAAT8Q/wDbrDLtdVW/MQngQqlvgzxHGzVO9xHRNtkRYAdtzU5FYkOt2hI/JBv3SwspK/NLLODvL5idp86jvnRS+4pa1ZjtLM2r1iSsuYWgNaqqu9eYfgGm1hTh1K8YI0sqxxivuAD0hYnuTrDyuvV4voMRS65s8xS+O0MzXmKGfxKm9vSOTV44lIrz4lslpFLTjpHWPfLXpAFNhwra2fPt16eW0+U5CI9FZFVuZBbfMsXVwOBd9ICtderuJgKb+phB3eYJQFvBcowcmcRdsXxM1yfmUUu5rNmU8f1G8u24Qphq+L9q1qiNBUacyPiIEAIW6uMmwrRBtk60b/7LUAYQj/cK2c62lhQvXCXUjnDiDVbXO1Qt7AdIgwLWpXmIdGOHl0gAEo1cpiSdY70d7u/j2uDwFpQYE8xaBhVr0j5HOcbJgNOagP1JUB1PEcJ/BKebskAJWuxFmLexGZPkililVqVfArxsh0M8Gsw7INlouL8V9+0dRzAYcCP3qW9IdsE+q3mUCYKnI/E3gBzDqYWWUMFYrZA5f7i2p1QMg9IAkzu1rfbMVh7N1CDskFcjR2lAHQq7ikUNN9cQtNTWruciYqOoEHXUwYhsSoHrZFmyDArUNfcLXlbQOTj/AOQUFe0t1kdJTB+4ajCYxOZNDnxMBnMNZi9bJWa6SgxMWxusTWCyC4AogxLt8h7bx4xGWZkapCs9sw9oyCqWtrGT5ykY2yvoWVBFQXVxRXTCnnpFQMNFwU0VdKpd8SUZZfC6TbHZUYXGIsekpUjD4UmzL4hDiKiALdnrLggUBlVb/XtHBHeGrFKYa7MP1Hqysm5RDrLRLs5VpbLSgetF+ZXvuipXIoRpZCtQ6RnA6NTJy5aIqVvVqNUIMBuaTzsdZQdHc8gB/ftOHwerpWIijU7pfjnxCXcgptaoyzN64JnamX5jhZTu3hYloNZvPglxPq77HJuuveUttsOeIk7aIzCB5a0jV1coSrkwIVwZdVRnbNSkUg9XhE6kYmKVgHywbhAqvqrtPVYYzorFv49kzo6fMZjegr0/qECFMS+chFqVAMy0qghKz8S9XmB5SsXPkhS/KgDYY6RAjggbVYVvCJKIWOFqUg+iXj2ZEHThi4xhOVByS4HYssoJdwT0Ba8RF4Gola41L5aUrRvU/JFcY6IrwL5axZ/Ud4o1OlYJh+kB9mxrQYmukzBd/JlzhmKkzohxKytqEXelQByWoAd11HJ82gR+IqNzB0Zyx7wGZZUazlpogxODdZy+1AiJY7GZzChOCYgcEzxcr4aSJlq0H7S4WQEQd439LTEhITK7qY0MWJuzMqqHNqPmWpWHCxeD4le1oxsw+IYM+jpl8biAqJ0lkFs4IAKE6kHGY9Rbv0UaqRb59vcLSVEulpIPE1Iz88CXHmJSBX/AgyXXVOpnZMN7+oaoXwlMVT4Rd8QQCNCj3FOv2HpdiCaAyDUTgUzdVMMK6cQEBwqDqAOIm52Sm3AeX3IO2WiqG0U/EMwRkeSNoPwzCADpFGMy8Wy2sq0SuXaqr1b9z9p+ojawgCnHIiKIHBLtd1AulgHcHBXfE7zfRHfbf29y6Xu/UsBLzGnJHFpHJO+HxL+yByWYNsU8wgZYNGIQuzfk6y/bLHwCljRtAyo3KOWb0Hkq32a56R+csKQliBmCrUppgmfsd5SBHxL8GoUwl8o0wmtTsugW3i8ji6nAm1PmNP5uDfshFAAtXQQspMZ92f0RRss1y7HL8sdBCKLttzOBCNlte0FcY6xA8TapfSYrBmOXTABDiFpR5YfIY0Ng9YhiK7fRZ1O+e8bOAtsV0Gx7MG9f5gRUAyrF6Nyl+H8XBCXWrkO7fyjIVyQSHhcDvBwSVddDCWoIHCRKYOYQ1CarEAIqsFlmDtNsbEGV6IJtkV+kyZ0ZYocLmK+rhX2TSdmWrdoJt9h5LIceLKB2f8a1G0nS0eg0nxbFfYFjT3b+UQyy2YxzwCW6gns9ZhV6gjTBs6K/s4huet7B1GGHM4zMJeagWxMYIFcwrlqL6UCav4PERcqjKvWMbHBlf1NIQjYsHDJv8x/2Mx4gwUDpufw0wb/mgFUAzF6n5hPon2wPpLTrH5P07RcrYst7EzKW88CA7XMTvNqD9DxBFuyWiWW9epXV3Jb1hztvY6+SWUjIc/km9fxDOoY8FRFbgHc0KdgZjpHYsVdmvLcV6dkVdVij8nAgmoldf1gnW4bg1EBLGWpLRkLudnd8JOS8xldBsezDP8AeRaN9A6rwS5FkKx9S/RjzFWWOUVgN/hyzpP7PM1qcSsRLl111jnzL6a7NSjTZBxpyH9Qyyf8A0lX9wenOtMJht4JH5pOZMk+qkZLlbXKwbxfQMxLnR0f7gAUY9d7DHJASxxLgsz+IAuXk+i5POyWfgZx6r4fZ6lKVQoBtYnNc020+Tg4JY5jAyvDf6SrsX1SioVK9WbJQciekRuvkKgDk+Ix3G7+xRMsV5m4N+swfUBgAO0Zz/C3AXyJQDkMYqlMN5alIcjH97DoDxOpyfPoLcAM/O7/p5l+XnPoXF0JS7ekAFBE9KmZzHJK/jfFTn0XEIy/Q3n0ZYXv04lxg5lJcPYE7pP2cV0YTwXM0BddnZ2YoQTNsqKIveDRcMX9/zIwnT036VD0P4XLjMR12cRZbcHvHWmFuKSq38SLXhZeo4AS0F6nodlrqXZBxOfS6YfEuPrqXFo9OPTHq5Wa9KzEnEdQwuXzL5mFTOnGE/9k="
+                    alt="Photo of Warren Wang" width="140" height="140" />
+                <h2>About me</h2>
+                <p>
+                    I&rsquo;m a Computer Science graduate student at USC who builds
+                    full-stack web applications, with a soft spot for the backend.
+                    I&rsquo;m most interested in network security, scalable architecture
+                    and interfaces that feel effortless.
+                </p>
+                <p>
+                    <a class="btn btn-default" href="#contact" role="button">Get in touch &raquo;</a>
+                </p>
+            </div>
+            <!-- /.col-lg-4 -->
+            <div class="col-lg-4">
+                <div class="circle" aria-hidden="true">AWS</div>
+                <h2>Experience</h2>
+                <p>
+                    Software engineer intern at Amazon Web Services, full-stack tech
+                    lead at the startup ArchNexus, and a full-stack developer intern at
+                    Crypto-Arsenal before that.
+                </p>
+                <p>
+                    <a class="btn btn-default" href="#experience" role="button">View details &raquo;</a>
+                </p>
+            </div>
+            <!-- /.col-lg-4 -->
+            <div class="col-lg-4">
+                <div class="circle" aria-hidden="true">272K</div>
+                <h2>Community</h2>
+                <p>
+                    169 answers on Stack Overflow with a 60%+ acceptance rate, mostly on
+                    Django, Python, PostgreSQL and REST API design, reaching 272K
+                    people.
+                </p>
+                <p>
+                    <a class="btn btn-default" href="#stackoverflow" role="button">View details &raquo;</a>
+                </p>
+            </div>
+            <!-- /.col-lg-4 -->
+        </div>
+        <!-- /.row -->
+
+        <!-- START THE FEATURETTES -->
+
+        <hr class="featurette-divider" id="experience" />
+
+        <div class="row featurette">
+            <div class="col-md-7">
+                <h2 class="featurette-heading">
+                    Amazon Web Services.
+                    <span class="text-muted">Software Engineer Intern.</span>
+                </h2>
+                <p class="featurette-meta text-muted">
+                    May &ndash; Aug 2026 &middot; East Palo Alto, CA &middot; AWS
+                    Console UX Platform and Product
+                </p>
+                <p class="lead">
+                    I built a pipeline event-indexing service that grounds an on-call AI
+                    assistant in 160K+ events with a sourced audit trail, cutting triage
+                    time by 60%. I also cut 20-minute deployment reviews to under 5
+                    minutes with plain-English change summaries, tested by 300+
+                    engineers, and load-tested the system to a 0.1% error rate before
+                    launch.
+                </p>
+            </div>
+            <div class="col-md-5">
+                <div class="featurette-stat">
+                    <div class="inner">
+                        <span class="num">60%</span><span class="cap">less on-call triage time</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <hr class="featurette-divider" />
+
+        <div class="row featurette">
+            <div class="col-md-7 col-md-push-5">
+                <h2 class="featurette-heading">
+                    ArchNexus. <span class="text-muted">Full-Stack Tech Lead.</span>
+                </h2>
+                <p class="featurette-meta text-muted">
+                    May 2025 &ndash; Apr 2026 &middot; Irvine, CA (remote) &middot;
+                    Startup
+                </p>
+                <p class="lead">
+                    I led daily scrums for a five-engineer team that took 30+
+                    customer-requested features into beta, about 3 days each. I built a
+                    WebSocket streaming backend for LLMs up to 175B parameters with
+                    under 2 ms of added latency, capped inference spend at $1,000/month
+                    with rate limiting, and secured payments against forged and
+                    duplicate charges.
+                </p>
+            </div>
+            <div class="col-md-5 col-md-pull-7">
+                <div class="featurette-stat">
+                    <div class="inner">
+                        <span class="num">30+</span><span class="cap">features shipped to beta</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <hr class="featurette-divider" />
+
+        <div class="row featurette">
+            <div class="col-md-7">
+                <h2 class="featurette-heading">
+                    Crypto-Arsenal.
+                    <span class="text-muted">Full-Stack Developer Intern.</span>
+                </h2>
+                <p class="featurette-meta text-muted">
+                    Mar 2024 &ndash; Apr 2025 &middot; Taipei, Taiwan (remote)
+                </p>
+                <p class="lead">
+                    I streamed live prices to traders&rsquo; charts in under 5 ms, cut
+                    page load time by 33% with caching (transaction volume rose 20%
+                    after release), designed a GraphQL API that lets new trading
+                    platforms plug in without backend rewrites, and halved release time
+                    with GitHub Actions.
+                </p>
+            </div>
+            <div class="col-md-5">
+                <div class="featurette-stat">
+                    <div class="inner">
+                        <span class="num">33%</span><span class="cap">shorter page load time</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <hr class="featurette-divider" />
+
+        <div class="row earlier">
+            <div class="col-md-8 col-md-offset-2">
+                <h2 class="text-center" style="font-weight: 300; margin-bottom: 24px">
+                    Before that
+                </h2>
+                <div class="list-group">
+                    <div class="list-group-item">
+                        <h4 class="list-group-item-heading">
+                            USC Radical Play Lab
+                            <small>Student Assistant &middot; Sep 2023 &ndash; Apr 2026</small>
+                        </h4>
+                        <p class="list-group-item-text">
+                            Removed 25% duplicate entries from the lab&rsquo;s research
+                            records and grew project website traffic 15% by restructuring
+                            the site for search-engine crawlers.
+                        </p>
+                    </div>
+                    <div class="list-group-item">
+                        <h4 class="list-group-item-heading">
+                            Entertainment Industry College Outreach Program
+                            <small>Teaching Assistant &middot; Jun &ndash; Jul 2024</small>
+                        </h4>
+                        <p class="list-group-item-text">
+                            Taught algorithm design to 25 students and wrote 14 C++
+                            data-structure modules; test scores rose 15%.
+                        </p>
+                    </div>
+                    <div class="list-group-item">
+                        <h4 class="list-group-item-heading">
+                            USC Racing, Formula SAE
+                            <small>Software Systems Team Member &middot; Aug 2023 &ndash; Jul
+                                2024</small>
+                        </h4>
+                        <p class="list-group-item-text">
+                            Halved control-unit latency in C, avoiding a $1,000 hardware
+                            upgrade, and traced faulty signal paths to catch 20+ bugs before
+                            competition.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- /END THE FEATURETTES -->
+    </div>
+    <!-- /.container -->
+
+    <!-- Projects (album)
+    ================================================== -->
+    <section id="projects" style="margin-top: 60px">
+        <div class="section-intro">
+            <h1>Projects</h1>
+            <p class="lead text-muted">
+                A few things I&rsquo;ve built recently, from a document classifier
+                that avoids paying for LLM calls to my own encrypted DNS setup.
+            </p>
+        </div>
+
+        <div class="album">
+            <div class="container">
+                <div class="row row-eq">
+                    <div class="col-sm-6 col-md-3">
+                        <div class="thumbnail">
+                            <div class="thumb-placeholder">
+                                Python &middot; Django &middot; TypeScript
+                            </div>
+                            <div class="caption">
+                                <h3>Document Classification Service</h3>
+                                <p>
+                                    Classifies 118 of 120 county forms with no LLM calls by
+                                    matching printed form codes; local OCR reads 93% of degraded
+                                    scans.
+                                </p>
+                                <div class="card-footer clearfix">
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-sm btn-default" data-toggle="modal"
+                                            data-target="#modal-docclass">
+                                            View
+                                        </button>
+                                    </div>
+                                    <small class="text-muted pull-right">Aug 2026</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <div class="thumbnail">
+                            <div class="thumb-placeholder">
+                                DNSCrypt-Proxy &middot; Unbound &middot; Bash
+                            </div>
+                            <div class="caption">
+                                <h3>Local DNS Infrastructure</h3>
+                                <p>
+                                    Encrypted DNS load-balanced across 73 resolvers with
+                                    auto-failover; 98% cache hit rate over 10 months on a
+                                    hardened host.
+                                </p>
+                                <div class="card-footer clearfix">
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-sm btn-default" data-toggle="modal"
+                                            data-target="#modal-dns">
+                                            View
+                                        </button>
+                                    </div>
+                                    <small class="text-muted pull-right">Jan 2026</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <div class="thumbnail">
+                            <div class="thumb-placeholder">Python</div>
+                            <div class="caption">
+                                <h3>spinread</h3>
+                                <p>
+                                    Course project (USC CSCI 467) dissecting which parts of a
+                                    table tennis ball&rsquo;s trajectory reveal each spin
+                                    component.
+                                </p>
+                                <div class="card-footer clearfix">
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-sm btn-default" data-toggle="modal"
+                                            data-target="#modal-spinread">
+                                            View
+                                        </button>
+                                        <a class="btn btn-sm btn-default"
+                                            href="https://github.com/crimsonpython24/spinread" target="_blank"
+                                            rel="noopener">GitHub</a>
+                                    </div>
+                                    <small class="text-muted pull-right">Fall 2026</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <div class="thumbnail">
+                            <div class="thumb-placeholder">C# &middot; Unity</div>
+                            <div class="caption">
+                                <h3>Lumen</h3>
+                                <p>
+                                    Game prototype that grew out of a team final project for
+                                    USC&rsquo;s Game Prototyping course, taught by Dr. Andy
+                                    Nealen.
+                                </p>
+                                <div class="card-footer clearfix">
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-sm btn-default" data-toggle="modal"
+                                            data-target="#modal-lumen">
+                                            View
+                                        </button>
+                                        <a class="btn btn-sm btn-default"
+                                            href="https://github.com/crimsonpython24/lumen" target="_blank"
+                                            rel="noopener">GitHub</a>
+                                    </div>
+                                    <small class="text-muted pull-right">Spring 2026</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stack Overflow
+    ================================================== -->
+    <div class="container" id="stackoverflow">
+        <div class="section-intro" style="padding-top: 60px">
+            <h1>Stack Overflow</h1>
+            <p class="lead text-muted">
+                Six years on the site, mostly answering Django and Python questions.
+            </p>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table table-striped stats-table">
+                    <tbody>
+                        <tr>
+                            <td>People helped</td>
+                            <td>272K</td>
+                        </tr>
+                        <tr>
+                            <td>Reputation</td>
+                            <td>2,373</td>
+                        </tr>
+                        <tr>
+                            <td>Answers (Dec 2019 &ndash; Jan 2023)</td>
+                            <td>169</td>
+                        </tr>
+                        <tr>
+                            <td>Acceptance rate</td>
+                            <td>60%+</td>
+                        </tr>
+                        <tr>
+                            <td>Django: accepted / positively scored answers</td>
+                            <td>46 / 64</td>
+                        </tr>
+                        <tr>
+                            <td>Python: accepted / positively scored answers</td>
+                            <td>26 / 34</td>
+                        </tr>
+                        <tr>
+                            <td>Badges</td>
+                            <td>49</td>
+                        </tr>
+                        <tr>
+                            <td>Django answerer rank, Q3 2020</td>
+                            <td>Top 0.3%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Featured answers</h3>
+                    </div>
+                    <div class="list-group">
+                        <a class="list-group-item" href="https://stackoverflow.com/a/67788621" target="_blank"
+                            rel="noopener"><span class="badge">12</span>How to make react-hook-form work
+                            with multiple forms in one page?</a>
+                        <a class="list-group-item" href="https://stackoverflow.com/a/63144890" target="_blank"
+                            rel="noopener"><span class="badge">5</span>Get all months and years in a
+                            range</a>
+                        <a class="list-group-item" href="https://stackoverflow.com/a/63072504" target="_blank"
+                            rel="noopener"><span class="badge">5</span>Django no module named
+                            &lsquo;main&rsquo;</a>
+                    </div>
+                </div>
+                <p>
+                    <a class="btn btn-default" href="https://stackoverflow.com/users/12467282/crimsonpython24"
+                        target="_blank" rel="noopener" role="button">View my profile &raquo;</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- Skills + Education
+      ================================================== -->
+        <hr class="featurette-divider" id="education" />
+
+        <div class="row">
+            <div class="col-md-5 skills">
+                <h2>Skills</h2>
+                <h4>Languages</h4>
+                <p>
+                    <span class="label label-default">TypeScript</span>
+                    <span class="label label-default">JavaScript</span>
+                    <span class="label label-default">Python</span>
+                    <span class="label label-default">Go</span>
+                    <span class="label label-default">C++</span>
+                    <span class="label label-default">C</span>
+                    <span class="label label-default">SQL</span>
+                    <span class="label label-default">HTML/CSS</span>
+                </p>
+                <h4>Web</h4>
+                <p>
+                    <span class="label label-default">React</span>
+                    <span class="label label-default">Next.js</span>
+                    <span class="label label-default">Node.js</span>
+                    <span class="label label-default">Django</span>
+                    <span class="label label-default">Flask</span>
+                    <span class="label label-default">GraphQL</span>
+                    <span class="label label-default">REST APIs</span>
+                    <span class="label label-default">WebSocket</span>
+                </p>
+                <h4>Infrastructure</h4>
+                <p>
+                    <span class="label label-default">AWS Lambda</span>
+                    <span class="label label-default">OpenSearch</span>
+                    <span class="label label-default">CloudFormation</span>
+                    <span class="label label-default">Bedrock</span>
+                    <span class="label label-default">Docker</span>
+                    <span class="label label-default">PostgreSQL</span>
+                    <span class="label label-default">Redis</span>
+                    <span class="label label-default">Linux</span>
+                    <span class="label label-default">Git</span>
+                </p>
+            </div>
+            <div class="col-md-7 edu">
+                <h2>Education</h2>
+                <div class="panel panel-default" style="margin-top: 22px">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">
+                            University of Southern California &middot; Los Angeles, CA
+                        </h3>
+                    </div>
+                    <ul class="list-group">
+                        <li class="list-group-item">
+                            <strong>Master of Science, Computer Science</strong>
+                            <span class="badge">GPA 3.5</span><br />
+                            <span class="text-muted">Jan 2026 &ndash; May 2027</span>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Bachelor of Science, Computer Science</strong>
+                            <span class="badge">GPA 3.66</span><br />
+                            <span class="text-muted">Aug 2023 &ndash; May 2027 &middot; Minor in Accounting
+                                &middot; W.V.T. Rusch Undergraduate Engineering Honors</span>
+                        </li>
+                    </ul>
+                    <div class="panel-body coursework">
+                        <p class="text-muted" style="margin-bottom: 8px">
+                            Relevant coursework
+                        </p>
+                        <span class="label">Analysis of Algorithms</span>
+                        <span class="label">Information Retrieval &amp; Web Search</span>
+                        <span class="label">Operating Systems</span>
+                        <span class="label">Internetworking</span>
+                        <span class="label">Computer &amp; Network Security</span>
+                        <span class="label">Software Engineering</span>
+                        <span class="label">Probability Theory</span>
+                        <span class="label">Linear Algebra</span>
+                        <span class="label">Discrete Math</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact jumbotron
+      ================================================== -->
+        <div class="jumbotron contact" id="contact">
+            <h1>Let&rsquo;s talk.</h1>
+            <p>
+                I graduate in May 2027 and I&rsquo;m open to full-time software
+                engineering roles. Email is the fastest way to reach me.
+            </p>
+            <p>
+                <a class="btn btn-primary btn-lg" href="mailto:usc430vazw@protonmail.com" role="button">Email me</a>
+                <a class="btn btn-default btn-lg" href="resume.pdf" target="_blank" rel="noopener"
+                    role="button">Download
+                    résumé</a>
+            </p>
+            <p class="contact-links">
+                <a href="mailto:usc430vazw@protonmail.com">usc430vazw@protonmail.com</a>
+                &middot;
+                <a href="https://www.linkedin.com/in/yjwarrenwang/" target="_blank" rel="noopener">LinkedIn</a>
+                &middot;
+                <a href="https://github.com/crimsonpython24" target="_blank" rel="noopener">GitHub</a>
+                &middot;
+                <a href="https://stackoverflow.com/users/12467282/crimsonpython24" target="_blank" rel="noopener">Stack
+                    Overflow</a>
+            </p>
+        </div>
+
+        <!-- FOOTER -->
+        <footer>
+            <p class="pull-right"><a href="#">Back to top</a></p>
+            <p>
+                &copy; 2026 Yu-Jen Warren Wang &middot; Off the clock: table tennis
+                and fine-tuning my home DNS.
+            </p>
+        </footer>
+    </div>
+    <!-- /.container -->
+
+    <!-- Project modals
+    ================================================== -->
+    <div class="modal fade" id="modal-docclass" tabindex="-1" role="dialog" aria-labelledby="modal-docclass-label">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id="modal-docclass-label">
+                        Document Classification Service
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted">
+                        Aug 2026 &ndash; present &middot; Python, Django, TypeScript,
+                        SQLite, Azure Foundry
+                    </p>
+                    <ul>
+                        <li>
+                            Classified 118 of 120 county forms with no LLM calls by matching
+                            printed form codes against a 121-form catalogue.
+                        </li>
+                        <li>
+                            Parsed text-layer PDFs directly and ran local OCR only on scans,
+                            reading 93% of 192 degraded images at no API cost.
+                        </li>
+                        <li>
+                            Built the Django upload API with SHA-256 duplicate detection and
+                            staff review for unmatched files, backed by 73 tests.
+                        </li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modal-dns" tabindex="-1" role="dialog" aria-labelledby="modal-dns-label">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id="modal-dns-label">
+                        Local DNS Server Infrastructure
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted">
+                        Jan 2026 &ndash; present &middot; DNSCrypt-Proxy, Unbound, Santa,
+                        AIDE, Little Snitch, Bash
+                    </p>
+                    <ul>
+                        <li>
+                            Load-balanced encrypted DNS over 73 European resolvers with
+                            auto-failover, halving uncached lookups from 20 to 10 ms.
+                        </li>
+                        <li>
+                            Isolated proxy and cache traffic with Unbound and OS firewall
+                            rules, running for 10 months with a 98% cache hit rate.
+                        </li>
+                        <li>
+                            Hardened the host with a 222-rule CNSSI-1253 baseline, Santa
+                            binary authorization and AIDE file-integrity checks.
+                        </li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modal-spinread" tabindex="-1" role="dialog" aria-labelledby="modal-spinread-label">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id="modal-spinread-label">spinread</h4>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted">
+                        Fall 2026 &middot; Course project &middot; Python
+                    </p>
+                    <p>
+                        My final project for USC CSCI 467 dissects table tennis ball
+                        trajectories to find which parts of the flight reveal each spin
+                        component.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <a class="btn btn-primary" href="https://github.com/crimsonpython24/spinread" target="_blank"
+                        rel="noopener">View on GitHub</a>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modal-lumen" tabindex="-1" role="dialog" aria-labelledby="modal-lumen-label">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id="modal-lumen-label">Lumen</h4>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted">
+                        Spring 2026 &middot; Team project &middot; C#, Unity
+                    </p>
+                    <p>
+                        Lumen grew out of our team&rsquo;s final project for USC CSCI 426,
+                        Game Prototyping, taught by Dr. Andy Nealen.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <a class="btn btn-primary" href="https://github.com/crimsonpython24/lumen" target="_blank"
+                        rel="noopener">View
+                        on GitHub</a>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"
+        integrity="sha384-1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"
+        integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd"
+        crossorigin="anonymous"></script>
+    <script>
+        // Close the mobile menu after a link is tapped
+        $("#navbar a").on("click", function () {
+            $("#navbar.in").collapse("hide");
+        });
+    </script>
+</body>
+
+</html>
